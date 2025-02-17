@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+@media print {
+    body {
+        background: white !important; /* Remove dark mode backgrounds */
+        color: black !important;
+    }
+
+    button {
+        display: none !important; /* Hide buttons */
+    }
+}
