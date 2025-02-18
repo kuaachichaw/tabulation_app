@@ -128,50 +128,89 @@ export default function Leaderboard() {
                         ) : error ? (
                             <p className="text-red-500">{error}</p>
                         ) : leaderboard.length === 0 ? (
-                            <p className="text-gray-500 dark:text-gray-400">No leaderboard data available. Please try again later.</p>
+                            <p className="text-gray-500 dark:text-gray-400">Judges did not Score this Segment Yet..</p>
                         ) : (
-                            <>
-                                {/* Top 3 Podium */}
-                                <div className="flex justify-center items-end gap-6 mt-6">
-                                    {leaderboard.slice(0, 3).map((candidate, index) => (
-                                        <motion.div
-                                            key={candidate.id}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.5 }}
-                                            className="relative flex flex-col items-center p-4 rounded-lg shadow-md bg-white dark:bg-gray-800"
-                                            style={{ minWidth: index === 0 ? "120px" : "100px" }}
-                                        >
-                                            <img
-                                                src={`/storage/${candidate.picture}`}
-                                                alt={candidate.name}
-                                                className="w-30 h-35 rounded-full object-cover border-4 border-white"
-                                            />
-                                            <span className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded-full">
-                                                {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
-                                            </span>
-                                            <h4 className="text-gray-900 dark:text-white text-lg font-bold">{candidate.name}</h4>
-                                            <p className="text-gray-700 dark:text-gray-300 font-semibold">{isOverall ? `${candidate.total_score}%` : `${candidate.score}%`}</p>
-                                        </motion.div>
-                                    ))}
-                                </div>
+                            <>{/* Top 3 Podium */}
+                            <div className="flex justify-center items-end gap-6 mt-6">
+                                {leaderboard.slice(0, 3).map((candidate, index) => (
+                                    <motion.div
+                                        key={candidate.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.5 }}
+                                        className="relative flex flex-col items-center p-4 rounded-lg shadow-md bg-white dark:bg-gray-800"
+                                        style={{ minWidth: index === 0 ? "120px" : "100px" }}
+                                    >
+                                        {/* Candidate Picture & Rank Badge */}
+                                        <img
+                                            src={`/storage/${candidate.picture}`}
+                                            alt={candidate.name}
+                                            className="w-30 h-35 rounded-full object-cover border-4 border-white"
+                                        />
+                                        <span className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded-full">
+                                            {index === 0 ? "🏆" : index === 1 ? "🥈" : "🥉"}
+                                        </span>
+                            
+                                        {/* Candidate Name */}
+                                        <h4 className="text-gray-900 dark:text-white text-lg font-bold mt-2">{candidate.name}</h4>
+                            
+                                        {/* Judge Scores (Only in Segment View) */}
+                                        {!isOverall && candidate.judge_scores && (
+                                            <div className="mt-1 text-sm text-gray-600 dark:text-gray-400 text-center">
+                                                {candidate.judge_scores.map((judge) => (
+                                                    <p key={judge.judge_id}>
+                                                        <span className="font-semibold text-gray-800 dark:text-gray-200">{judge.judge}:</span> 
+                                                        <span className="ml-2 text-gray-700 dark:text-gray-300">{judge.judge_total}%</span>
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        )}
+                            
+                                        {/* Total Score */}
+                                        <p className="mt-1 text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                                            {isOverall ? `${candidate.overall_score}%` : `Total Score: ${candidate.judge_score}%`}
+                                        </p>
+                                    </motion.div>
+                                ))}
+                            </div>
+                            
 
-                                {/* Remaining Candidates */}
                                 <div className="mt-8">
-                                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Other Contestants</h3>
-                                    <ul className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-                                        {leaderboard.slice(3).map((candidate, index) => (
-                                            <li key={candidate.id} className="flex items-center justify-between p-3 border-b last:border-b-0">
-                                                <div className="flex items-center">
-                                                    <span className="text-lg font-bold text-gray-900 dark:text-white mr-4">{index + 4}.</span>
-                                                    <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-10 h-10 rounded-full object-cover mr-3" />
-                                                    <span className="text-gray-900 dark:text-white font-semibold">{candidate.name}</span>
-                                                </div>
-                                                <span className="text-gray-700 dark:text-gray-300 font-semibold">{isOverall ? `${candidate.total_score}%` : `${candidate.score}%`}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Other Contestants</h3>
+    <ul className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        {leaderboard.slice(3).map((candidate, index) => (
+            <li key={candidate.id} className="flex flex-col p-3 border-b last:border-b-0">
+                {/* Candidate Info */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <span className="text-lg font-bold text-gray-900 dark:text-white mr-4">{index + 4}.</span>
+                        <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-10 h-10 rounded-full object-cover mr-3" />
+                        <span className="text-gray-900 dark:text-white font-semibold">{candidate.name}</span>
+                    </div>
+
+                    {/* Judge Scores (Only in Segment View) */}
+                    {!isOverall && candidate.judge_scores && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mx-4">
+                            {candidate.judge_scores.map((judge) => (
+                                <p key={judge.judge_id} className="text-center">
+                                    <span className="font-semibold text-gray-800 dark:text-gray-200">{judge.judge}:</span> 
+                                    <span className="ml-2 text-gray-700 dark:text-gray-300">{judge.judge_total}%</span>
+                                </p>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Total Score */}
+                    <p className="text-gray-700 dark:text-gray-300 font-semibold">
+                        {isOverall ? `${candidate.overall_score}%` : `Total Score: ${candidate.judge_total}%`}
+                    </p>
+                </div>
+            </li>
+        ))}
+    </ul>
+</div>
+
+                        
                             </>
                         )}
                     </div>

@@ -18,7 +18,6 @@ Route::post('/overall-leaderboard/save', [OverallLeaderboardController::class, '
 Route::get('/overall-leaderboard', [OverallLeaderboardController::class, 'index']);
 
 
-
 Route::get('/leaderboard/overall', [LeaderboardController::class, 'getOverallLeaderboard']);
 Route::get('/leaderboard/{segment}', [LeaderboardController::class, 'index']);
 

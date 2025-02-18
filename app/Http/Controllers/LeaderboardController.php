@@ -26,98 +26,104 @@ class LeaderboardController extends Controller
 
     private function getSegmentLeaderboard($segmentId)
     {
-        $segments = OverallLeaderboard::where('segment_id', $segmentId)->get();
-        
-        //Log::info("📊 Segment Weights:", $segments->mapWithKeys(fn ($s) => [$s->segment->name => $s->weight])->toArray());
-    
-        $leaderboard = Candidate::select('candidates.id', 'candidates.name', 'candidates.picture')
-            ->join('scores', 'candidates.id', '=', 'scores.candidate_id')
-            ->where('scores.segment_id', $segmentId)
-           ->selectRaw('ROUND(SUM(scores.score) / COUNT(DISTINCT scores.judge_id), 2) as score')
-            ->groupBy('candidates.id', 'candidates.name', 'candidates.picture')
-            ->orderByDesc('score')
-            ->get();
-    
-        //Log::info("📊 Segment Leaderboard (Segment ID: $segmentId)", $leaderboard->toArray());
-    
-        return $leaderboard;
-    }
-    
-  
+        try {
+            $segments = OverallLeaderboard::where('segment_id', $segmentId)->get();
+            
+            $leaderboard = Candidate::select('candidates.id', 'candidates.name', 'candidates.picture')
+                ->join('scores', 'candidates.id', '=', 'scores.candidate_id')
+                ->where('scores.segment_id', $segmentId)
+                ->selectRaw('ROUND(SUM(scores.score) / COUNT(DISTINCT scores.judge_id), 2) as judge_score')
+                ->groupBy('candidates.id', 'candidates.name', 'candidates.picture')
+                ->orderByDesc('judge_score')
+                ->get();
 
-    public function getOverallLeaderboard()
-{
-    // Fetch selected segments & their weights
-    $segments = OverallLeaderboard::with('segment')->get();
+            foreach ($leaderboard as $candidate) {
+                $judgeScores = Score::where('candidate_id', $candidate->id)
+                    ->where('segment_id', $segmentId)
+                    ->join('judges', 'scores.judge_id', '=', 'judges.id')
+                    ->select('judges.id as judge_id', 'judges.name as judge', DB::raw('SUM(scores.score) as judge_total'))
+                    ->groupBy('judges.id', 'judges.name')
+                    ->get();
 
-    // If no segments are set up for overall scoring, return an error response
-    if ($segments->isEmpty()) {
-        return response()->json(['error' => 'No segments configured for the overall leaderboard.'], 400);
-    }
+                $judgeScores->transform(function ($item) {
+                    if ($item->judge_total <= 100) {
+                        $item->judge_total *= 1;
+                    }
+                    return $item;
+                });
 
-    // Log segment weight information
-    Log::info("📊 Segment Weights:", $segments->mapWithKeys(fn ($s) => [$s->segment->name => $s->weight])->toArray());
+                $totalScore = $judgeScores->avg('judge_total');
 
-    // Get all candidates
-    $candidates = Candidate::all();
+                //Log::info("📝 Judge Scores for Candidate: {$candidate->name}", $judgeScores->toArray());
+                //Log::info("🏆 Judge Total Score for Candidate: {$candidate->name}: " . number_format($totalScore, 2) . "%");
 
-    // Process each candidate's weighted score
-    $leaderboard = $candidates->map(function ($candidate) use ($segments) {
-        $totalWeightedScore = 0;
-        $logData = [];
-
-        foreach ($segments as $segment) {
-            // 🔄 Use correct SQL logic from getSegmentLeaderboard()
-            $segmentScore = Candidate::join('scores', 'candidates.id', '=', 'scores.candidate_id')
-                ->where('candidates.id', $candidate->id)
-                ->where('scores.segment_id', $segment->segment_id)
-                ->selectRaw('ROUND(SUM(scores.score) / COUNT(DISTINCT scores.judge_id), 2) as score')
-                ->value('score') ?? 0;
-
-            // ✅ Scale scores to 100 if judges are scoring out of 10
-            if ($segmentScore <= 10) {
-                $segmentScore *= 10;
+                $candidate->judge_scores = $judgeScores;
+                $candidate->judge_total = number_format($totalScore, 2) . '%';
             }
 
-            // Weighted contribution
-            $weightedScore = ($segmentScore * ($segment->weight / 100));
-            $totalWeightedScore += $weightedScore;
+            return $leaderboard;
+        } catch (\Exception $e) {
+            Log::error('Error fetching segment leaderboard:', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to load segment leaderboard data.'], 500);
+        }
+    }
 
-            // Store log data
-            $logData[] = [
-                'segment' => $segment->segment->name,
-                'segment_weight' => $segment->weight . '%',
-                'candidate_score' => $segmentScore, // ✅ Scaled correctly
-                'weighted_contribution' => $weightedScore,
-            ];
+
+    
+
+    public function getOverallLeaderboard()
+    {
+        $segments = OverallLeaderboard::with('segment')->get();
+
+        if ($segments->isEmpty()) {
+            return response()->json(['error' => 'No segments configured for the overall leaderboard.'], 400);
         }
 
-        // Log candidate calculation details
-        Log::info("📝 Candidate: {$candidate->name}", $logData);
+        $candidates = Candidate::all();
 
-        return [
-            'id' => $candidate->id,
-            'name' => $candidate->name,
-            'picture' => $candidate->picture,
-            'raw_score' => $totalWeightedScore, // ✅ Store numeric value for sorting
-        ];
-    });
+        $leaderboard = $candidates->map(function ($candidate) use ($segments) {
+            $totalWeightedScore = 0;
+            $logData = [];
 
-    // Sort candidates by total score (highest first)
-    $leaderboard = $leaderboard->sortByDesc('raw_score')->values()->map(function ($candidate) {
-        return [
-            'id' => $candidate['id'],
-            'name' => $candidate['name'],
-            'picture' => $candidate['picture'],
-            'total_score' => number_format($candidate['raw_score'], 2, '.', '') . '%', // ✅ Convert to percentage
-        ];
-    });
+            foreach ($segments as $segment) {
+                $segmentScore = Candidate::join('scores', 'candidates.id', '=', 'scores.candidate_id')
+                    ->where('candidates.id', $candidate->id)
+                    ->where('scores.segment_id', $segment->segment_id)
+                    ->selectRaw('ROUND(SUM(scores.score) / COUNT(DISTINCT scores.judge_id), 2) as judge_score')
+                    ->value('judge_score') ?? 0;
 
-   
+                if ($segmentScore <= 10) {
+                    $segmentScore *= 10;
+                }
 
-    return response()->json($leaderboard);
-}
+                $weightedScore = ($segmentScore * ($segment->weight / 100));
+                $totalWeightedScore += $weightedScore;
 
-    
-    
+                $logData[] = [
+                    'segment' => $segment->segment->name,
+                    'segment_weight' => $segment->weight . '%',
+                    'candidate_score' => $segmentScore,
+                    'weighted_contribution' => $weightedScore,
+                ];
+            }
+
+            return [
+                'id' => $candidate->id,
+                'name' => $candidate->name,
+                'picture' => $candidate->picture,
+                'raw_score' => $totalWeightedScore,
+            ];
+        });
+
+        $leaderboard = $leaderboard->sortByDesc('raw_score')->values()->map(function ($candidate) {
+            return [
+                'id' => $candidate['id'],
+                'name' => $candidate['name'],
+                'picture' => $candidate['picture'],
+                'overall_score' => number_format($candidate['raw_score'], 2, '.', '') . '%',
+            ];
+        });
+
+        return response()->json($leaderboard);
+    }
 }
