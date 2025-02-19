@@ -15,6 +15,16 @@ export default function Leaderboard() {
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isOverallSetupOpen, setIsOverallSetupOpen] = useState(false);  // Define state for modal visibility
     const [error, setError] = useState(null); // Error handling state
+    const [judges, setJudges] = useState([]);
+
+    useEffect(() => {
+        axios.get('/api/judges')  // Adjust endpoint as needed
+            .then((response) => {
+                setJudges(response.data);
+            })
+            .catch((error) => console.error('Error fetching judges:', error));
+    }, []);
+    
     
 
     useEffect(() => {
@@ -70,6 +80,13 @@ export default function Leaderboard() {
             setLoading(false);
         }
     };
+    console.log("Data passed to ExportCSVModal:", {
+        leaderboard,
+        segments,
+        selectedSegmentId,
+        isOverall,
+        judges,
+    });
 
     return (
         <AdminLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Leaderboard</h2>}>
@@ -218,13 +235,16 @@ export default function Leaderboard() {
             </div>
 
             <ExportCSVModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                leaderboard={leaderboard}
-                segments={segments}
-                selectedSegmentId={selectedSegmentId}
-                isOverall={isOverall}
-            />
+    isOpen={isExportModalOpen}
+    onClose={() => setIsExportModalOpen(false)}
+    leaderboard={leaderboard}  // Leaderboard data (array of candidates)
+    segments={segments}  // List of all segments
+    selectedSegmentId={selectedSegmentId}  // Currently selected segment ID
+    isOverall={isOverall}  // Boolean: whether the user is viewing the Overall Leaderboard
+    judges={judges}  // NEW: List of all judges
+/>
+
+
 
             <OverallLeaderboardModal
                 isOpen={isOverallSetupOpen}
