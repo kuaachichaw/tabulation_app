@@ -183,10 +183,30 @@ export default function Leaderboard() {
                                             </div>
                                         )}
                             
-                                        {/* Total Score */}
-                                        <p className="mt-1 text-gray-700 dark:text-gray-300 font-semibold text-lg">
-                                            {isOverall ? `${candidate.overall_score}%` : `Total Score: ${candidate.judge_score}%`}
-                                        </p>
+{/* Overall and Segment TOP 3 Score */}
+     {isOverall && candidate.segments?.length > 0 ? (
+    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        {candidate.segments.map((segment, index) => (
+            <p key={index}>
+                <strong>{segment.segment_name} ({segment.segment_weight}):</strong> = {segment.weighted_contribution}%
+            </p>
+        ))}
+
+        {/* Total Score for Overall Leaderboard */}
+        <p className="mt-2 font-bold text-lg text-gray-900 dark:text-white">
+            Total Score: {parseFloat(candidate.total_score.replace('%', '')).toFixed(2)}%
+        </p>
+    </div>
+) : (
+    
+    //Total Score for Segment Leaderboard
+    <p className="mt-2 font-bold text-lg text-gray-900 dark:text-white">
+        Total Score: {candidate.judge_score}%
+    </p>
+)}
+
+
+
                                     </motion.div>
                                 ))}
                             </div>
@@ -217,10 +237,26 @@ export default function Leaderboard() {
                         </div>
                     )}
 
-                    {/* Total Score */}
-                    <p className="text-gray-700 dark:text-gray-300 font-semibold">
-                        {isOverall ? `${candidate.overall_score}%` : `Total Score: ${candidate.judge_total}%`}
-                    </p>
+{/* Overall and Segment other Candidates */}
+{isOverall && candidate.segments?.length > 0 ? (
+    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        {candidate.segments.map((segment, index) => (
+            <p key={index}>
+                <strong>{segment.segment_name} ({segment.segment_weight}):</strong> = {segment.weighted_contribution}%
+            </p>
+        ))}
+
+        {/* Total Score for Overall Leaderboard */}
+        <p className="mt-2 font-bold text-lg text-gray-900 dark:text-white">
+            Total Score: {parseFloat(candidate.total_score.replace('%', '')).toFixed(2)}%
+        </p>
+    </div>
+) : (
+     //Total Score for Segment Leaderboard
+    <p className="mt-2 font-bold text-lg text-gray-900 dark:text-white">
+        Total Score: {candidate.judge_score}%
+    </p>
+)}
                 </div>
             </li>
         ))}
