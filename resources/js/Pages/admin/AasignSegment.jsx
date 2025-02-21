@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import FlexContainer from '@/Components/FlexContainer';
 
 export default function AassignSegment() {
     const [judges, setJudges] = useState([]);
@@ -87,10 +88,10 @@ export default function AassignSegment() {
     return (
         <AdminLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Assign Segment to Judges</h2>}>
             <Head title="Assign Segment" />
-
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <FlexContainer>
+            
                     <div className="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <div className="sticky top-0 z-10">
                         <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-6">Select a Segment</h3>
                         <div className="space-y-4">
                             {segments.map(segment => (
@@ -101,6 +102,7 @@ export default function AassignSegment() {
                                 </div>
                             ))}
                         </div>
+                    </div>
                     </div>
 
                     <div className="col-span-3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg relative">
@@ -137,8 +139,7 @@ export default function AassignSegment() {
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
+                    </FlexContainer>
 
             <ToastContainer />
         </AdminLayout>

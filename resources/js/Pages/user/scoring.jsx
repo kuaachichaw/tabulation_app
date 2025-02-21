@@ -140,8 +140,8 @@ export default function Scoring() {
     return (
         <AdminLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Scoring</h2>}>
             <Head title="Scoring" />
-            
-            <div className="flex w-full px-8 py-6 space-x-6">
+             <div className="flex w-full px-8 py-6 space-x-6">
+           
                 {/* Candidates List */}
                 <div className="w-1/ bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Select a Contestant</h3>
@@ -153,7 +153,7 @@ export default function Scoring() {
                             }`}
                             onClick={() => handleCandidateSelection(candidate.id)} 
                         >
-                            <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-20 h-20 rounded-full object-cover" />
+                            <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-25 h-20 rounded-full object-cover" />
                             <span className="text-lg">{candidate.name}</span>
                         </div>
                     ))}

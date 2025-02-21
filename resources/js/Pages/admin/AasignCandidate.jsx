@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import FlexContainer from '@/Components/FlexContainer';
 
 export default function AassignCandidate() {
     const [judges, setJudges] = useState([]);
@@ -79,18 +80,13 @@ export default function AassignCandidate() {
     };
 
     return (
-        <AdminLayout
-                   header={
-                       <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                           Assign Judge to Candidates 
-                       </h2>
-                   }
-               >
+            <AdminLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Assign Judge to Candidates </h2>}>
             <Head title="Assign Candidate" />
+            <FlexContainer>
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+           
                     <div className="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <div className="sticky top-0 z-10">
                         <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-6">Select a Judge</h3>
                         <div className="space-y-4">
                             {judges.map((judge) => (
@@ -99,6 +95,7 @@ export default function AassignCandidate() {
                                     <span className="text-lg font-medium">{judge.name}</span>
                                 </div>
                             ))}
+                        </div>
                         </div>
                     </div>
 
@@ -119,7 +116,7 @@ export default function AassignCandidate() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {candidates.map((candidate) => (
                                 <div key={candidate.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-                                    <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-24 h-24 rounded-full object-cover mb-4" />
+                                    <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-24 h-25 rounded-full object-cover mb-4" />
                                     <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">{candidate.name}</h4>
                                     <label className="mt-4 flex items-center space-x-2 cursor-pointer">
                                         <div className={`relative w-14 h-7 flex items-center rounded-full cursor-pointer transition-colors duration-300 ${assignments[candidate.id] ? 'bg-green-600' : 'bg-red-600'}`} onClick={() => handleToggle(candidate.id)}>
@@ -130,13 +127,17 @@ export default function AassignCandidate() {
                             ))}
                         </div>
 
-                        <div className="flex justify-center space-x-6 mt-8">
-                            <button className={`px-6 py-3 text-white rounded-lg transition duration-300 ${selectedJudge ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}`} onClick={handleSave} disabled={!selectedJudge || loading}>{loading ? 'Saving...' : 'Save Assignment'}</button>
+                    
+                        <div className="flex justify-center mt-8">
+                            <button className={`px-6 py-3 text-white rounded-lg transition duration-300 ${selectedJudge && Object.keys(assignments).length > 0 ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}`} 
+                                onClick={handleSave} disabled={!selectedJudge || loading}>
+                                {loading ? 'Saving...' : 'Save Assignments'}
+                            </button>
                         </div>
-                    </div>
-                </div>
-            </div>
 
+
+                    </div>
+                    </FlexContainer>
             <ToastContainer />
         </AdminLayout>
     );

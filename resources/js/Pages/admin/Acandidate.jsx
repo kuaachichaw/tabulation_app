@@ -13,6 +13,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { FaTrashAlt, FaPlus, FaEdit } from 'react-icons/fa';
+import FlexContainer from '@/Components/FlexContainer';
 
 export default function Acandidate() {
     const [candidates, setCandidates] = useState([]);
@@ -98,14 +99,10 @@ export default function Acandidate() {
     const closeFullscreen = () => setSelectedImage(null);
 
     return (
-         <AdminLayout
-                    header={
-                        <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                            Canidates
-                        </h2>
-                    }
-                >
+        
+            <AdminLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Canidates</h2>}>
             <Head title="Admin Candidate List" />
+          
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
