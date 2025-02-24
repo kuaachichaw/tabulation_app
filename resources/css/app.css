@@ -15,3 +15,54 @@
         display: none !important; /* Hide buttons */
     }
 }
+
+@media (max-width: 768px) {
+    .flex-container {
+        flex-direction: column;
+    }
+
+    .w-full {
+        width: 100%;
+    }
+
+    .md\:w-1\/4 {
+        width: 100%;
+    }
+
+    .md\:w-3\/4 {
+        width: 100%;
+    }
+
+    .flex-col {
+        flex-direction: column;
+    }
+
+    .flex-row {
+        flex-direction: row;
+    }
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.text-lg {
+    font-size: 1.125rem; /* 18px */
+}
+
+@media (max-width: 768px) {
+    .text-lg {
+        font-size: 1rem; /* 16px */
+    }
+}
+
+.hamburger {
+    display: none; /* Hide by default on larger screens */
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: block; /* Show on small screens */
+    }
+}

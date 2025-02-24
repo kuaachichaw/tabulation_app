@@ -6,7 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import FullscreenImageModal from '@/Modal/FullscreenImageModal';
-import { FaTrashAlt, FaPlus, FaEdit } from 'react-icons/fa'; // Added FaEdit icon
+import { FaTrashAlt, FaPlus, FaEdit } from 'react-icons/fa';
 
 export default function Ajudge() {
     const [judges, setJudges] = useState([]);
@@ -101,10 +101,12 @@ export default function Ajudge() {
             <Head title="Admin Judge List" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-lg rounded-lg dark:bg-gray-800 p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-200">Manage Judges</h3>
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="overflow-hidden bg-white shadow-lg rounded-lg dark:bg-gray-800 p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-200 mb-4 sm:mb-0">
+                                Manage Judges
+                            </h3>
                             <button 
                                 onClick={() => openModal()}
                                 className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-200 ease-in-out shadow-md flex items-center gap-2"
@@ -114,33 +116,31 @@ export default function Ajudge() {
                         </div>
 
                         {judges.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {judges.map((judge) => (
                                     <div key={judge.id} className="bg-white p-4 rounded-lg shadow-md dark:bg-gray-800 flex flex-col items-center">
                                         {judge.picture && (
                                             <img
                                                 src={`/storage/${judge.picture}`}
                                                 alt={judge.name}
-                                                className="w-120 h-120 object-cover rounded-md cursor-pointer transform transition duration-300 ease-in-out hover:scale-110"
+                                                className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-md cursor-pointer transform transition duration-300 ease-in-out hover:scale-110"
                                                 loading="lazy"
                                                 onClick={() => handleImageClick(`/storage/${judge.picture}`)}
                                             />
                                         )}
-                                        <h3 className="text-gray-500 dark:text-gray-300 text-center text-xl">
+                                        <h3 className="text-gray-500 dark:text-gray-300 text-center text-lg sm:text-xl mt-4">
                                             {judge.name}
                                         </h3>
-                                        <p className="text-gray-500 dark:text-gray-300 text-center">
+                                        <p className="text-gray-500 dark:text-gray-300 text-center text-sm sm:text-base">
                                             Username: {judge.username}
                                         </p>
                                         <div className="mt-4 flex justify-center space-x-4">
-                                            {/* Updated: Update button with FaEdit icon */}
                                             <button
                                                 className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 flex items-center gap-2"
                                                 onClick={() => openModal(judge)}
                                             >
                                                 <FaEdit size={16} /> Update
                                             </button>
-                                            {/* Updated: Delete button remains with FaTrashAlt icon */}
                                             <button
                                                 className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 flex items-center gap-2"
                                                 onClick={() => handleDelete(judge.id)}

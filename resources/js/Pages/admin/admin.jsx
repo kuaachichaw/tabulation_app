@@ -21,6 +21,11 @@ export default function admin() {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                         <div className="p-6 text-gray-900 dark:text-gray-100">
                         <p>{user ? `Welcome, ${user.name}` : "No user logged in"}</p>
+
+                        <div className="bg-blue-500 sm:bg-green-500 md:bg-red-500 lg:bg-yellow-500">
+    This box changes color based on screen size.
+</div>
+
                         </div>
                     </div>
                 </div>
