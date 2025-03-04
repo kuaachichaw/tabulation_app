@@ -3,23 +3,25 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { BiMenu } from "react-icons/bi";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-    const [isOpen, setIsOpen] = useState(false); // State for sidebar toggle
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="flex min-h-screen min-w-full bg-gray-100 dark:bg-gray-900">
-
+        <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
             {/* Sidebar */}
-            <aside className={`w-60 bg-gray-900 text-gray-200 h-screen shadow-lg flex flex-col fixed md:relative md:translate-x-0 transition-transform duration-300 ${
-                isOpen ? "translate-x-0" : "-translate-x-full"
-            } md:block`}>
+            <aside
+                className={`fixed md:relative h-screen w-64 bg-gray-900 text-gray-200 shadow-lg flex flex-col transition-transform duration-300 z-50 ${
+                    isOpen ? "translate-x-0" : "-translate-x-full"
+                } md:translate-x-0`}
+            >
                 <div className="p-4 flex items-center justify-between border-b border-gray-700">
-                    <Link href="/">
+                    <Link href="/Dashboard">
                         <ApplicationLogo className="h-10 w-auto fill-current text-white" />
                     </Link>
-                    {/* Close button (only on mobile) */}
+                    {/* Close Button (Mobile) */}
                     <button 
                         className="md:hidden text-white text-2xl"
                         onClick={() => setIsOpen(false)}
@@ -28,12 +30,13 @@ export default function AuthenticatedLayout({ header, children }) {
                     </button>
                 </div>
 
-                <nav className="mt-4 flex-grow">
+                <nav className="mt-4 flex-grow overflow-auto ">
                     <ul className="space-y-2">
                         {[
                             { name: "Dashboard", routeName: "user" },
-                            { name: "Candidates", routeName: "candidate" },
-                            { name: "Segment", routeName: "segment" },
+                            { name: "LeaderBoard", routeName: "UserLeaderboard" },
+                            { name: "Candidate List", routeName: "candidate" },
+                            { name: "Segment List", routeName: "segment" },
                             { name: "Scoring", routeName: "scoring" },
                         ].map(({ name, routeName }) => (
                             <li key={routeName}>
@@ -57,15 +60,15 @@ export default function AuthenticatedLayout({ header, children }) {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col">
-                {/* Top Navbar */}
-                <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 p-4 flex justify-between items-center">
-                    {/* Hamburger Button (only on mobile) */}
+            <div className="flex-1 flex flex-col min-h-screen">
+                {/* Navbar */}
+                <nav className={`border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 p-4 flex justify-between items-center sticky top-0 z-50 md:static`}>
+                    {/* Hamburger Button (Mobile) */}
                     <button 
                         className="md:hidden text-gray-700 dark:text-gray-200 text-2xl"
                         onClick={() => setIsOpen(!isOpen)}
                     >
-                        ☰
+                        <BiMenu size={40} />
                     </button>
 
                     <div className="text-base font-semibold text-gray-800 dark:text-gray-200">
@@ -94,7 +97,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </nav>
 
                 {/* Page Content */}
-                <main className="p-6 flex-1">{children}</main>
+                <main className="p-4 md:p-6 flex-1">{children}</main>
             </div>
         </div>
     );

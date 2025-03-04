@@ -51,6 +51,7 @@ img {
     font-size: 1.125rem; /* 18px */
 }
 
+
 @media (max-width: 768px) {
     .text-lg {
         font-size: 1rem; /* 16px */
@@ -65,4 +66,26 @@ img {
     .hamburger {
         display: block; /* Show on small screens */
     }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-10px);
+    }
+}
+
+.badgeBounce {
+    animation: bounce 1s infinite;
 }

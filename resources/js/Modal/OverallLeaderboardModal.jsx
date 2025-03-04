@@ -4,6 +4,8 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const OverallLeaderboardModal = ({ isOpen, closeModal, segments = [] }) => {
     const [selectedSegments, setSelectedSegments] = useState([]);
@@ -56,22 +58,28 @@ const OverallLeaderboardModal = ({ isOpen, closeModal, segments = [] }) => {
 
     // ✅ Handle form submission
     const handleSubmit = async (e) => {
-        e.preventDefault();  // Prevents page refresh
+        e.preventDefault();
     
         const payload = {
             segments: selectedSegments
-                .filter(segment => segment.included)  // ✅ Only included segments
+                .filter(segment => segment.included)
                 .map(segment => ({
-                    segment_id: segment.id,  // ✅ Ensure backend expects `segment_id`
-                    weight: parseFloat(segment.weight) || 0  // ✅ Convert weight to number
+                    segment_id: segment.id,
+                    weight: parseFloat(segment.weight) || 0
                 }))
         };
     
         try {
             const response = await axios.post('/overall-leaderboard/save', payload);
             console.log('Response:', response.data);
+    
+            // Show success toast
             toast.success('Overall leaderboard saved successfully!');
-            closeModal();
+    
+            // Delay closing the modal to ensure the toast is visible
+            setTimeout(() => {
+                closeModal();
+            }, 1000); // Adjust the delay as needed
         } catch (error) {
             console.error('Failed to save overall leaderboard:', error.response?.data || error);
             toast.error('Error saving overall leaderboard');
@@ -138,7 +146,9 @@ const OverallLeaderboardModal = ({ isOpen, closeModal, segments = [] }) => {
                     </div>
                 </form>
             </div>
+            <ToastContainer />
         </div>
+        
     );
 };
 

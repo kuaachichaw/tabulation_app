@@ -1,31 +1,26 @@
 import { useState, useEffect } from 'react';
-import AdminLayout from '@/Layouts/AdminLayout';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ExportCSVModal from '@/Modal/ExportCSVModal';
-import OverallLeaderboardModal from '@/Modal/OverallLeaderboardModal';
 import FlexContainer from '@/Components/FlexContainer';
 import useDrag from '@/Components/useDrag'; // Import the updated useDrag hook
 import { BiLogoSlack } from "react-icons/bi";
-import LeaderboardTypeSelector from '@/Components/LeaderboardTypeSelector';
+import UserLeaderBoard from '@/Components/UserLeaderBoard';
 
-
-export default function Uleaderboard() {
+export default function UserLeaderboard() {
     // State management
     const [segments, setSegments] = useState([]);
     const [selectedSegmentId, setSelectedSegmentId] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isOverall, setIsOverall] = useState(false);
-    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [isOverallSetupOpen, setIsOverallSetupOpen] = useState(false);
     const [error, setError] = useState(null);
     const [judges, setJudges] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-  const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
+    const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
         x: window.innerWidth - 100, // Adjusted initial X position
         y: 20, // Initial Y position
     });
@@ -102,7 +97,7 @@ export default function Uleaderboard() {
 
     return (
         
-        <AdminLayout header={<h2 className="text-lg  font-semibold text-gray-800 dark:text-gray-200">Leaderboard</h2>}>
+        <AuthenticatedLayout header={<h2 className="text-lg  font-semibold text-gray-800 dark:text-gray-200">Leaderboard</h2>}>
             <Head title="Leaderboard" />
             <FlexContainer>
 
@@ -110,10 +105,9 @@ export default function Uleaderboard() {
         <div className="hidden lg:block md:hidden bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
     <div className="sticky top-0 z-10">
     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">Leaderboard Type</h3>
-                    <LeaderboardTypeSelector
+                    <UserLeaderBoard
                             isOverall={isOverall}
                             setIsOverall={setIsOverall}
-                            setIsModalOpen={setIsModalOpen}
                             segments={segments}
                             selectedSegmentId={selectedSegmentId}
                             setSelectedSegmentId={setSelectedSegmentId}
@@ -139,7 +133,7 @@ export default function Uleaderboard() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md animate-fadeIn"onClick={(e) => e.stopPropagation()}>
                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">Leaderboard Type</h3>
-                    <LeaderboardTypeSelector
+                    <UserLeaderBoard
                             isOverall={isOverall}
                             setIsOverall={setIsOverall}
                             setIsModalOpen={setIsModalOpen}
@@ -166,22 +160,7 @@ export default function Uleaderboard() {
                         <h3 className="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200">
                             {isOverall ? 'Overall Leaderboard' : segments.find(segment => segment.id === selectedSegmentId)?.name || 'Leaderboard'}
                         </h3>
-                        <div className="flex gap-2 md:gap-3 mt-2 md:mt-0">
-                            {isOverall && (
-                                <button
-                                    onClick={() => setIsOverallSetupOpen(true)}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 md:py-2 px-3 md:px-4 rounded-lg text-sm md:text-base"
-                                >
-                                    Overall Setup
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setIsExportModalOpen(true)}
-                                className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 md:py-2 px-3 md:px-4 rounded-lg text-sm md:text-base"
-                            >
-                                Download CSV
-                            </button>
-                        </div>
+                        
                     </div>
         
         {/* Loading & Error Handling */}
@@ -192,7 +171,7 @@ export default function Uleaderboard() {
         ) : error ? (
             <p className="text-red-500">{error}</p>
         ) : leaderboard.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">Judges did not Score this Segment Yet..</p>
+            <p className="text-gray-500 dark:text-gray-400">No Record for this Segment Yet..</p>
         ) : (
             <>
                 {/* Top 3 Podium */}
@@ -216,10 +195,9 @@ export default function Uleaderboard() {
     />
 
     {/* Rank Badge - Centered Above the Picture with Bounce Animation */}
-    <span className="badgeBounce absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-lg px-8 py-3 rounded-full">
-    {index === 0 ? "🏆" : index === 1 ? "🥈" : "🥉"}
-</span>
-
+    <span className="badgeBounce absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-sm px-3 py-1 rounded-full">
+        {index === 0 ? "🏆" : index === 1 ? "🥈" : "🥉"}
+    </span>
 </div>
                             {/* Candidate Name */}
                             <h4 className="text-gray-900 dark:text-white text-lg font-bold mt-2">{candidate.name}</h4>
@@ -316,24 +294,7 @@ export default function Uleaderboard() {
                     )}
                 </div>
             </FlexContainer>
-
-            {/* Modals */}
-            <ExportCSVModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                leaderboard={leaderboard}
-                segments={segments}  // List of all segments
-    selectedSegmentId={selectedSegmentId}  // Currently selected segment ID
-    isOverall={isOverall}  // Boolean: whether the user is viewing the Overall Leaderboard
-    judges={judges}  // NEW: List of all judges
-/>
-            <OverallLeaderboardModal
-                isOpen={isOverallSetupOpen}
-                closeModal={() => setIsOverallSetupOpen(false)}
-                segments={segments}
-            />
-
 <ToastContainer />
-        </AdminLayout>
+        </AuthenticatedLayout>
     );
 }

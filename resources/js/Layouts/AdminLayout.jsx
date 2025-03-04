@@ -3,6 +3,7 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { BiMenu } from "react-icons/bi";
 
 export default function AdminLayout({ header, children }) {
     const user = usePage().props.auth.user;
@@ -29,7 +30,7 @@ export default function AdminLayout({ header, children }) {
                     </button>
                 </div>
 
-                <nav className="mt-4 flex-grow overflow-auto">
+                <nav className="mt-4 flex-grow overflow-auto ">
                     <ul className="space-y-2">
                         {[
                             { name: "Dashboard", routeName: "admin" },
@@ -64,14 +65,13 @@ export default function AdminLayout({ header, children }) {
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-h-screen">
                 {/* Navbar */}
-                
-                <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 p-4 flex justify-between items-center ">
+                <nav className={`border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 p-4 flex justify-between items-center sticky top-0 z-50 md:static`}>
                     {/* Hamburger Button (Mobile) */}
                     <button 
                         className="md:hidden text-gray-700 dark:text-gray-200 text-2xl"
                         onClick={() => setIsOpen(!isOpen)}
                     >
-                        ☰
+                        <BiMenu size={40} />
                     </button>
 
                     <div className="text-base font-semibold text-gray-800 dark:text-gray-200">

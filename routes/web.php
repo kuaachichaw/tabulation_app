@@ -93,7 +93,9 @@ Route::get('/143432', function () {
 })->name('admin');
 
 
-
+Route::get('/LeaderBoard', function () {
+    return Inertia::render('user/UserLeaderboard'); 
+})->name('UserLeaderboard');
 
 Route::get('/FCscoring', function () {
     return Inertia::render('user/FCscoring'); 
