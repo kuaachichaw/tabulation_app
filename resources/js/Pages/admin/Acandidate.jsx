@@ -159,7 +159,7 @@ export default function Acandidate() {
                                     onClick={() => setDisplayMode('solo')}
                                     className={`px-4 py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center gap-2 ${
                                         displayMode === 'solo'
-                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                            ? 'bg-indigo-500 text-white hover:bg-indigo-700'
                                             : 'bg-gray-500 text-white hover:bg-gray-600'
                                     }`}
                                 >
@@ -169,7 +169,7 @@ export default function Acandidate() {
                                     onClick={() => setDisplayMode('pair')}
                                     className={`px-4 py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center gap-2 ${
                                         displayMode === 'pair'
-                                            ? 'bg-green-500 text-white hover:bg-green-600'
+                                            ? 'bg-indigo-500 text-white hover:bg-indigo-700'
                                             : 'bg-gray-500 text-white hover:bg-gray-600'
                                     }`}
                                 >

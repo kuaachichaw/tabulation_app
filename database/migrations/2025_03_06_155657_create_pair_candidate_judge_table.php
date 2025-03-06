@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('pair_candidate_judge', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pair_candidate_id')->constrained()->onDelete('cascade'); // Foreign key to pair_candidates table
-            $table->foreignId('judge_id')->constrained()->onDelete('cascade'); // Foreign key to judges table
+            $table->foreignId('pair_candidate_id')->constrained()->onDelete('cascade');
+            $table->foreignId('judge_id')->constrained()->onDelete('cascade');
+            $table->boolean('assigned_male')->default(false); // Tracks if male candidate is assigned
+            $table->boolean('assigned_female')->default(false); // Tracks if female candidate is assigned
             $table->timestamps();
         });
     }
@@ -22,7 +24,7 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('pair_candidate_judge');
     }
