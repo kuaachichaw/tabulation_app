@@ -41,4 +41,10 @@ class Judge extends Authenticatable
         return $this->belongsToMany(Segment::class, 'judge_segment', 'judge_id', 'segment_id')
             ->withTimestamps();
     }
+
+    // In the Judge model
+public function pairCandidates()
+{
+    return $this->belongsToMany(PairCandidate::class, 'pair_candidate_judge');
+}
 }

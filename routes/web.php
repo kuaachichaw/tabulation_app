@@ -13,6 +13,16 @@ use App\Http\Controllers\JudgeSegmentController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\OverallLeaderboardController;
+use App\Http\Controllers\PairCandidateController;
+use App\Http\Controllers\JudgePairCandidateController;
+
+// Pair Assignments
+Route::post('/api/pair-assignments', [JudgePairCandidateController::class, 'store']);
+Route::get('/api/pair-assignments/{judgeId}', [JudgePairCandidateController::class, 'show']);
+
+Route::prefix('api')->group(function () {
+    Route::apiResource('pair-candidates', PairCandidateController::class);
+});
 
 Route::post('/overall-leaderboard/save', [OverallLeaderboardController::class, 'store']);
 Route::get('/overall-leaderboard', [OverallLeaderboardController::class, 'index']);
