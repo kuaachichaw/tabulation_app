@@ -224,7 +224,7 @@ export default function Scoring() {
     className="w-full text-left text-xl font-semibold mb-4 text-white"
     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
 >
-    {isSidebarCollapsed ? "▶" : "▼"} Candidates
+    {isSidebarCollapsed ? "▶" : "▼"} Select A Candidates
 </button>
 
                         {!isSidebarCollapsed && (

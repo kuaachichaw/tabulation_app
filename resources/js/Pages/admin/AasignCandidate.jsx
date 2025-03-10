@@ -208,31 +208,33 @@ export default function AassignCandidate() {
         Assign {selectedJudge ? judges.find(j => j.id === selectedJudge)?.name : 'a Judge'} to Candidates
     </h3>
 
-    {/* Solo and Pair Candidates Buttons */}
-    <div className="flex justify-center mb-6">
+{/* Solo and Pair Candidates Buttons */}
+<div className="flex justify-center mb-6">
         <div className="flex items-center gap-4">
-            <button
-                onClick={() => setDisplayMode('solo')}
-                className={`px-4 py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center gap-2 ${
-                    displayMode === 'solo'
-                        ? 'bg-indigo-500 text-white hover:bg-indigo-700'
-                        : 'bg-gray-500 text-white hover:bg-gray-600'
-                }`}
-            >
-                <BiSolidUser size={16} /> Solo Candidates
-            </button>
-            <button
-                onClick={() => setDisplayMode('pair')}
-                className={`px-4 py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center gap-2 ${
-                    displayMode === 'pair'
-                        ? 'bg-indigo-500 text-white hover:bg-indigo-700'
-                        : 'bg-gray-500 text-white hover:bg-gray-600'
-                }`}
-            >
-                <HiUsers size={16} /> Pair Candidates
-            </button>
-        </div>
+        <button
+            onClick={() => setDisplayMode('solo')}
+            className={`px-3 md:px-4 py-1 md:py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center justify-center gap-2 text-sm md:text-base ${
+                displayMode === 'solo'
+                    ? 'bg-indigo-500 text-white hover:bg-indigo-700'
+                    : 'bg-gray-500 text-white hover:bg-gray-600'
+            }`}
+        >
+            <BiSolidUser size={18} /> Solo Candidates
+        </button>
+        <button
+            onClick={() => setDisplayMode('pair')}
+            className={`px-3 md:px-4 py-1 md:py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center justify-center gap-2 text-sm md:text-base ${
+                displayMode === 'pair'
+                    ? 'bg-indigo-500 text-white hover:bg-indigo-700'
+                    : 'bg-gray-500 text-white hover:bg-gray-600'
+            }`}
+        >
+            <HiUsers size={18} /> Pair Candidates
+        </button>
     </div>
+</div>
+
+
 
     {/* Select All Toggle (Positioned to the Right) */}
     <div className="absolute top-4 right-4">
