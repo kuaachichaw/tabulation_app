@@ -34,7 +34,6 @@ class Judge extends Authenticatable
         return $this->belongsToMany(Candidate::class, 'candidate_judge', 'judge_id', 'candidate_id')
             ->withTimestamps();
     }
-
     // Relationship with Segments
     public function segments()
     {
@@ -42,9 +41,20 @@ class Judge extends Authenticatable
             ->withTimestamps();
     }
 
-    // In the Judge model
-public function pairCandidates()
-{
-    return $this->belongsToMany(PairCandidate::class, 'pair_candidate_judge');
-}
+
+      // Relationship with Pair Candidates
+      public function pairCandidates()
+      {
+      return $this->belongsToMany(PairCandidate::class, 'pair_candidate_judge');
+      }
+      // Relationship with Pair Segments
+      public function pairsegments()
+      {
+          return $this->belongsToMany(PairSegment::class, 'pair_segment_table', 'judge_id', 'pair_segment_id')
+              ->withTimestamps();
+      }
+  
+
+       // Add PairSegment
+
 }

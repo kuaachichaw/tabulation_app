@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
     use Inertia\Inertia;
     use Illuminate\Http\Request;
     use App\Models\PairCandidate;
+    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Facades\Log;
 
 class PairCandidateController extends Controller
 {
@@ -76,5 +78,58 @@ class PairCandidateController extends Controller
     {
         $pairCandidate->delete();
         return response()->json(null, 204);
+    }
+
+    public function getAssignedPairCandidates()
+    {
+        
+    
+        $judgeId = auth()->id(); // Get the ID of the currently authenticated judge
+    
+        // Query pair candidates that are assigned to the current judge
+        $pairCandidates = PairCandidate::whereHas('judges', function ($query) use ($judgeId) {
+            $query->where('judge_id', $judgeId)
+                  ->where(function ($query) {
+                      $query->where('assigned_male', true)
+                            ->orWhere('assigned_female', true);
+                  });
+        })->with(['judges' => function ($query) use ($judgeId) {
+            $query->where('judge_id', $judgeId)
+                  ->select('pair_candidate_id', 'assigned_male', 'assigned_female');
+        }])->get();
+    
+        // Filter the response to include only assigned candidates
+        $filteredPairCandidates = $pairCandidates->map(function ($pairCandidate) {
+            $judgeAssignment = $pairCandidate->judges->first();
+    
+            $filteredPair = [
+                'id' => $pairCandidate->id,
+                'pair_name' => $pairCandidate->pair_name,
+            ];
+    
+            if ($judgeAssignment->assigned_male) {
+                $filteredPair['male'] = [
+                    'name' => $pairCandidate->male_name,
+                    'age' => $pairCandidate->male_age,
+                    'vital' => $pairCandidate->male_vital,
+                    'picture' => $pairCandidate->male_picture,
+                ];
+            }
+    
+            if ($judgeAssignment->assigned_female) {
+                $filteredPair['female'] = [
+                    'name' => $pairCandidate->female_name,
+                    'age' => $pairCandidate->female_age,
+                    'vital' => $pairCandidate->female_vital,
+                    'picture' => $pairCandidate->female_picture,
+                ];
+            }
+    
+            return $filteredPair;
+        });
+    
+       
+    
+        return response()->json($filteredPairCandidates);
     }
 }

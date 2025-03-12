@@ -11,15 +11,19 @@ import { useSwipeable } from 'react-swipeable'; // For swipe gestures
 
 export default function Scoring() {
     const [candidates, setCandidates] = useState([]);
+    const [pairCandidates, setPairCandidates] = useState([]); // New state for pair candidates
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [segments, setSegments] = useState([]);
-    const [scores, setScores] = useState({});
+    const [scores, setScores] = useState({
+        male: {}, // Scores for male candidates
+        female: {}, // Scores for female candidates
+    });
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
     const [lockedCandidates, setLockedCandidates] = useState([]); // For score locking
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // For responsive UI
- 
+
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
         x: window.innerWidth - 100,
         y: 20,
@@ -30,21 +34,24 @@ export default function Scoring() {
         onSwipedRight: () => setIsModalOpen(true),
     });
 
-    // Fetch candidates and segments
-    useEffect(() => {
+
+      // Fetch candidates, pair candidates, and segments
+      useEffect(() => {
         const fetchData = async () => {
             try {
-                const [candidatesRes, segmentsRes] = await Promise.all([
+                const [candidatesRes, pairCandidatesRes, segmentsRes] = await Promise.all([
                     axios.get('/api/candidates/assigned', { withCredentials: true }),
+                    axios.get('/api/pair-candidates/assigned', { withCredentials: true }), // Fetch pair candidates
                     axios.get('/api/judge-segments', { withCredentials: true }),
                 ]);
-
-                if (!candidatesRes.data || !segmentsRes.data) {
+    
+                if (!candidatesRes.data || !segmentsRes.data || !pairCandidatesRes.data) {
                     toast.error('Invalid data received from the server.');
                     return;
                 }
-
+    
                 setCandidates(candidatesRes.data);
+                setPairCandidates(pairCandidatesRes.data); // Set pair candidates
                 setSegments(segmentsRes.data);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -53,7 +60,7 @@ export default function Scoring() {
                 setIsFetching(false);
             }
         };
-
+    
         fetchData();
     }, []);
 
@@ -144,28 +151,6 @@ export default function Scoring() {
         }, 0).toFixed(2);
     }, [scores, segments]);
     
-    const calculateAllCandidateScores = () => {
-        return candidates.map(candidate => {
-            const totalScore = Object.entries(scores[candidate.id] || {}).reduce((acc, [segmentId, criteriaScores]) => {
-                const segment = segments.find(s => s.id == segmentId);
-                if (!segment) return acc;
-
-                return acc + Object.entries(criteriaScores).reduce((sum, [criterionId, score]) => {
-                    const criterion = segment.criteria.find(c => c.id == criterionId);
-                    return sum + (criterion ? ((score || 0) * criterion.weight) / 10 : 0);
-                }, 0);
-            }, 0);
-            return { ...candidate, totalScore: parseFloat(totalScore.toFixed(2)) };
-        });
-    };
-
-    const sortedCandidates = calculateAllCandidateScores().sort((a, b) => b.totalScore - a.totalScore);
-    const topCandidates = sortedCandidates.slice(0, 3).map((candidate, index) => {
-        const medals = ["🏆", "🥈", "🥉"];
-        return { ...candidate, medal: medals[index] };
-    });
-
-
     // Handle candidate selection
     const handleCandidateSelection = async (candidateId) => {
         setSelectedCandidate(candidateId);
@@ -224,17 +209,18 @@ export default function Scoring() {
     className="w-full text-left text-xl font-semibold mb-4 text-white"
     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
 >
-    {isSidebarCollapsed ? "▶" : "▼"} Candidates
+    {isSidebarCollapsed ? "▶" : "▼"} Select A Candidates
 </button>
 
                         {!isSidebarCollapsed && (
-                           <ScoringSelector
-                           candidates={candidates}
-                           topCandidates={topCandidates}
-                           setIsModalOpen={setIsModalOpen}
-                           selectedCandidate={selectedCandidate}
-                           onSelect={handleCandidateSelection}
-                       />
+                         // Inside the Scoring component's return statement
+<ScoringSelector
+    candidates={candidates}
+    pairCandidates={pairCandidates} // Pass pair candidates
+    setIsModalOpen={setIsModalOpen}
+    selectedCandidate={selectedCandidate}
+    onSelect={handleCandidateSelection}
+/>
                         )}
                     </div>
 
@@ -253,29 +239,29 @@ export default function Scoring() {
                             </button>
 
                             {isModalOpen && (
-                                <div {...swipeHandlers} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
-                                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-lg h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">Select a Contestant</h3>
-                                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600">
-                                        <ScoringSelector
-    candidates={candidates}
-    topCandidates={topCandidates}
-    setIsModalOpen={setIsModalOpen}
-    selectedCandidate={selectedCandidate}
-    onSelect={handleCandidateSelection}
-/>
-                                        </div>
-                                        <div className="flex justify-center mt-4">
-                                            <button
-                                                className="px-4 py-2 bg-red-300 dark:bg-red-600 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-400 dark:hover:bg-red-500 transition duration-300"
-                                                onClick={() => setIsModalOpen(false)}
-                                            >
-                                                Close
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+    <div {...swipeHandlers} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-lg h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">Select a Contestant</h3>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600">
+                <ScoringSelector
+                    candidates={candidates}
+                    pairCandidates={pairCandidates} // Pass pair candidates
+                    setIsModalOpen={setIsModalOpen}
+                    selectedCandidate={selectedCandidate}
+                    onSelect={handleCandidateSelection}
+                />
+            </div>
+            <div className="flex justify-center mt-4">
+                <button
+                    className="px-4 py-2 bg-red-300 dark:bg-red-600 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-400 dark:hover:bg-red-500 transition duration-300"
+                    onClick={() => setIsModalOpen(false)}
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+)}
                         </>
                     )}
 
@@ -296,15 +282,13 @@ export default function Scoring() {
                             </h3>
 
                             {/* Progress Bar */}
-                           {/* Progress Bar */}
+                          
 <div className="w-full bg-gray-300 rounded-full h-2.5 dark:bg-gray-800 mb-6">
     <div
         className="h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
         style={{ width: `${calculateProgress}%` }}
     ></div>
 </div>
-
-
                             {selectedCandidate && (
                                 <>
                                     {segments.map((segment) => (
@@ -368,3 +352,4 @@ export default function Scoring() {
         </>
     );
 }
+

@@ -15,13 +15,30 @@ use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\OverallLeaderboardController;
 use App\Http\Controllers\PairCandidateController;
 use App\Http\Controllers\JudgePairCandidateController;
+use App\Http\Controllers\PairSegmentController;
+use App\Http\Controllers\PairJudgeSegmentController;
+
+
+Route::get('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'getAssignedPairJudgeSegments'])->middleware('auth'); // Get assigned pair segments for the logged-in judge
+Route::get('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentController::class, 'index']); // Get assignments for a pair segment
+Route::post('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'store']); // Save assignments for a pair segment
+Route::delete('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentController::class, 'destroy']);   
+
+    Route::post('/pair-segments/store', [PairSegmentController::class, 'store']); // Create a new pair segment
+    Route::get('/api/pair-segments', [PairSegmentController::class, 'index']); // List all pair segments
+    Route::delete('/pair-segments/{id}', [PairSegmentController::class, 'destroy']); // Delete a pair segment
+
 
 // Pair Assignments
 Route::post('/api/pair-assignments', [JudgePairCandidateController::class, 'store']);
 Route::get('/api/pair-assignments/{judgeId}', [JudgePairCandidateController::class, 'show']);
 
 Route::prefix('api')->group(function () {
-    Route::apiResource('pair-candidates', PairCandidateController::class);
+    // Define the custom route first
+    Route::get('/pair-candidates/assigned', [PairCandidateController::class, 'getAssignedPairCandidates'])->middleware('auth');
+
+    // Then define the apiResource route
+    Route::apiResource('/pair-candidates', PairCandidateController::class);
 });
 
 Route::post('/overall-leaderboard/save', [OverallLeaderboardController::class, 'store']);
