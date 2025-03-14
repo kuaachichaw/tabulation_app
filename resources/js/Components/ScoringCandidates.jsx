@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaRegFaceSadCry } from "react-icons/fa6";
 
-const ScoringSelector = ({ candidates, pairCandidates, setIsModalOpen, selectedCandidate, onSelect }) => {
+const ScoringCandidates = ({ candidates, pairCandidates, setIsModalOpen, selectedCandidate, onSelect }) => {
     return (
         <div className="space-y-6">
             {/* Individual Candidates Section */}
@@ -184,4 +184,4 @@ const ScoringSelector = ({ candidates, pairCandidates, setIsModalOpen, selectedC
     );
 };
 
-export default ScoringSelector;
+export default ScoringCandidates;

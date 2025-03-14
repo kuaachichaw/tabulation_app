@@ -58,12 +58,12 @@ class PairJudgeSegmentController extends Controller
     public function getAssignedPairJudgeSegments()
     {
         $judgeId = auth()->id(); // Get the logged-in judge's ID
-
-        // Fetch pair segments assigned to the judge
+    
+        // Fetch pair segments assigned to the judge with criteria
         $pairSegments = PairSegment::whereHas('pairJudgeSegments', function ($query) use ($judgeId) {
             $query->where('judge_id', $judgeId);
-        })->with('criteria')->get(); // Include criteria if needed
-
+        })->with('paircriteria')->get(); // Include criteria
+    
         return response()->json($pairSegments);
     }
 }

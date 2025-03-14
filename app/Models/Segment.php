@@ -30,8 +30,6 @@ class Segment extends Model
      }
 
 
-       // add PairCritiria , PairjudgeSegments
-       // add PairScore , PairoverallLeaderboard
 
 public function scores()
 {

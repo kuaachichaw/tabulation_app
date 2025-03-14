@@ -11,7 +11,7 @@ class PairSegmentController extends Controller
     // Display a list of pair segments
     public function index()
     {
-        $pairSegments = PairSegment::with('criterias')->get();
+        $pairSegments = PairSegment::with('paircriteria')->get();
         return response()->json($pairSegments);
     }
 

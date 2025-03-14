@@ -13,14 +13,14 @@ class PairSegment extends Model
     protected $fillable = ['pair_name', 'male_name', 'female_name']; // Fillable fields
 
     // Define relationship with PairCriteria
-    public function criterias()
+    public function paircriteria()
     {
-        return $this->hasMany(PairCriteria::class, 'pair_segment_id');
+        return $this->hasMany(PairCriteria::class, 'pair_segment_id'); // Use PairCriteria
     }
 
-     
-      public function pairjudgeSegments()
-     {
-    return $this->hasMany(PairJudgeSegment::class, 'pair_segment_id');
-     }
+    // Define relationship with PairJudgeSegment
+    public function pairJudgeSegments()
+    {
+        return $this->hasMany(PairJudgeSegment::class, 'pair_segment_id');
+    }
 }

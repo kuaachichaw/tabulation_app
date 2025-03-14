@@ -106,7 +106,6 @@ class CandidateController extends Controller
 
  public function getAssignedCandidates()
  {
-     Log::info('getAssignedCandidates called by user: ' . auth()->id());
  
      $judgeId = auth()->id();
      
@@ -114,7 +113,6 @@ class CandidateController extends Controller
          $query->where('judge_id', $judgeId);
      })->get();
  
-     Log::info('Assigned candidates: ', $candidates->toArray());
  
      return response()->json($candidates);
  }

@@ -20,9 +20,9 @@ use App\Http\Controllers\PairJudgeSegmentController;
 
 
 Route::get('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'getAssignedPairJudgeSegments'])->middleware('auth'); // Get assigned pair segments for the logged-in judge
-Route::get('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentController::class, 'index']); // Get assignments for a pair segment
-Route::post('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'store']); // Save assignments for a pair segment
-Route::delete('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentController::class, 'destroy']);   
+Route::get('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentController::class, 'index']); 
+Route::post('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'store']); 
+ 
 
     Route::post('/pair-segments/store', [PairSegmentController::class, 'store']); // Create a new pair segment
     Route::get('/api/pair-segments', [PairSegmentController::class, 'index']); // List all pair segments
