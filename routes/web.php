@@ -17,6 +17,11 @@ use App\Http\Controllers\PairCandidateController;
 use App\Http\Controllers\JudgePairCandidateController;
 use App\Http\Controllers\PairSegmentController;
 use App\Http\Controllers\PairJudgeSegmentController;
+use App\Http\Controllers\PairScoreController;
+
+
+Route::post('/api/pair-scores', [PairScoreController::class, 'store'])->middleware('auth');
+Route::get('/api/pair-scores/{pairId}', [PairScoreController::class, 'show'])->middleware('auth');
 
 
 Route::get('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'getAssignedPairJudgeSegments'])->middleware('auth'); // Get assigned pair segments for the logged-in judge
@@ -49,8 +54,9 @@ Route::get('/leaderboard/overall', [LeaderboardController::class, 'getOverallLea
 Route::get('/leaderboard/{segment}', [LeaderboardController::class, 'index']);
 
 
-Route::get('/api/scores/{candidate}', [ScoreController::class, 'getScores']);
-Route::post('/scores', [ScoreController::class, 'store'])->middleware('auth');
+
+Route::post('/api/scores', [ScoreController::class, 'store'])->middleware('auth');
+Route::get('/api/scores/{candidate}', [ScoreController::class, 'getScores'])->middleware('auth');
 
 
 

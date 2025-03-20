@@ -11,12 +11,12 @@ import {
     API_ENDPOINTS,
     TOAST_MESSAGES,
     fetchData,
-    handleScoreChange,
     handleSave,
     calculateTotalScore,
     handleCandidateSelection,
     toggleLock,
     calculateProgress,
+    PairhandleSave,
 } from '@/BackEnd/ScoringBackEnd.jsx';
 
 export default function Scoring() {
@@ -31,6 +31,14 @@ export default function Scoring() {
     const [isFetching, setIsFetching] = useState(true);
     const [lockedCandidates, setLockedCandidates] = useState([]);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    // Ensure selectedCandidate is treated as a string
+  const selectedCandidateStr = String(selectedCandidate);
+
+  // Determine if the selected candidate is a pair candidate
+  const isPairCandidate = selectedCandidateStr.includes('-');
+
+  // Determine the selected candidate's gender
+  const selectedGender = isPairCandidate ? selectedCandidateStr.split('-')[1] : null;
 
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
         x: window.innerWidth - 100,
@@ -52,7 +60,7 @@ export default function Scoring() {
                     setCandidates(data.candidates);
                     setPairCandidates(data.pairCandidates);
                     setSegments(data.segments);
-                    setPairJudgeSegments(data.pairJudgeSegments);
+                    setPairJudgeSegments(data.pairJudgeSegments); // Initialize pairJudgeSegments
                 }
             } catch (error) {
                 toast.error(TOAST_MESSAGES.LOADING_ERROR);
@@ -68,7 +76,13 @@ export default function Scoring() {
     // Handle candidate selection
     const handleSelectCandidate = async (candidateId) => {
         try {
-            await handleCandidateSelection(candidateId, setSelectedCandidate, setScores, segments);
+            await handleCandidateSelection(
+                candidateId,
+                setSelectedCandidate,
+                setScores,
+                segments,
+                pairJudgeSegments // Pass pairJudgeSegments here
+            );
         } catch (error) {
             toast.error(TOAST_MESSAGES.LOADING_ERROR);
             console.error("Error selecting candidate:", error);
@@ -77,13 +91,37 @@ export default function Scoring() {
 
     // Handle score changes
     const handleScoreInputChange = (segmentId, criterionId, value) => {
-        handleScoreChange(scores, setScores, segmentId, criterionId, value);
+        if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 10)) {
+            setScores((prev) => ({
+                ...prev,
+                [segmentId]: {
+                    ...prev[segmentId],
+                    [criterionId]: value === "" ? null : parseFloat(value),
+                },
+            }));
+        } else {
+            toast.error("Score must be between 0 and 10.");
+        }
     };
 
     // Handle save scores
     const handleSaveScores = async () => {
         try {
-            await handleSave(selectedCandidate, scores, segments, setLoading);
+            if (!selectedCandidate) {
+                toast.error(TOAST_MESSAGES.SELECT_CANDIDATE);
+                return;
+            }
+
+            // Ensure selectedCandidate is a string
+            const selectedCandidateStr = String(selectedCandidate);
+
+            if (selectedCandidateStr.includes('-')) {
+                // Pair candidate
+                await PairhandleSave(selectedCandidateStr, scores, pairJudgeSegments, setLoading);
+            } else {
+                // Individual candidate
+                await handleSave(selectedCandidateStr, scores, segments, setLoading);
+            }
         } catch (error) {
             toast.error(TOAST_MESSAGES.ERROR);
             console.error("Error saving scores:", error);
@@ -160,20 +198,22 @@ export default function Scoring() {
                     )}
                     {/* Scoring Panel */}
                     <ScoringPanel
-                        selectedCandidate={selectedCandidate}
-                        candidates={candidates}
-                        pairCandidates={pairCandidates}
-                        segments={segments}
-                        pairJudgeSegments={pairJudgeSegments}
-                        scores={scores}
-                        handleScoreChange={handleScoreInputChange}
-                        calculateTotalScore={calculateTotalScore(scores, segments)}
-                        calculateProgress={calculateProgress(scores, segments)}
-                        loading={loading}
-                        lockedCandidates={lockedCandidates}
-                        handleSave={handleSaveScores}
-                        toggleLock={handleToggleLock}
-                    />
+  selectedCandidate={selectedCandidateStr}
+  candidates={candidates}
+  pairCandidates={pairCandidates}
+  segments={segments}
+  pairJudgeSegments={pairJudgeSegments}
+  scores={scores}
+  handleScoreChange={handleScoreInputChange}
+  calculateTotalScore={calculateTotalScore}
+  calculateProgress={calculateProgress}
+  loading={loading}
+  lockedCandidates={lockedCandidates}
+  handleSave={handleSaveScores}
+  toggleLock={handleToggleLock}
+  isPairCandidate={isPairCandidate} // Pass isPairCandidate here
+  selectedGender={selectedGender}    // Pass selectedGender here
+/>
                 </div>
             </div>
             <ToastContainer />

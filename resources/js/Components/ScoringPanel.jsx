@@ -1,20 +1,21 @@
 import { useMemo } from 'react';
-import TextInput from '@/Components/TextInput';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import IndividualScoreInput from '@/Components/IndividualScoreInput';
+import PairScoreInput from '@/Components/PairScoreInput';
 
 const ScoringPanel = ({
-    selectedCandidate = '', // Fallback to an empty string
-    candidates = [],
-    pairCandidates = [],
-    segments = [],
-    pairJudgeSegments = [],
-    scores = {},
-    handleScoreChange,
+    selectedCandidate,
+    candidates,
+    pairCandidates,
+    segments,
+    pairJudgeSegments,
+    scores,
+    handleScoreChange, // Use the function passed from the parent
     calculateTotalScore,
     calculateProgress,
-    loading = false,
-    lockedCandidates = [],
+    loading,
+    lockedCandidates,
     handleSave,
     toggleLock,
 }) => {
@@ -77,12 +78,24 @@ const ScoringPanel = ({
 
     // Handle score input changes
     const handleScoreInputChange = (segmentId, criterionId, value) => {
-        if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 10)) {
-            handleScoreChange(segmentId, criterionId, value);
-        } else {
-            toast.error("Score must be between 0 and 10.");
-        }
+        handleScoreChange(segmentId, criterionId, value);
     };
+
+    const totalScore = calculateTotalScore(
+        scores,
+        segments,
+        pairJudgeSegments,
+        isPairCandidate, // Use isPairCandidate here
+        selectedGender
+      );
+      
+      const progress = calculateProgress(
+        scores,
+        segments,
+        pairJudgeSegments,
+        isPairCandidate, // Use isPairCandidate here
+        selectedGender
+      );
 
     return (
         <div className="lg:col-span-9 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl relative">
@@ -100,11 +113,11 @@ const ScoringPanel = ({
 
                 {/* Progress Bar */}
                 <div className="w-full bg-gray-300 rounded-full h-2.5 dark:bg-gray-800 mb-6">
-                    <div
-                        className="h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
-                        style={{ width: `${calculateProgress}%` }}
-                    ></div>
-                </div>
+  <div
+    className="h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
+    style={{ width: `${progress}%` }}
+  ></div>
+</div>
 
                 {selectedCandidateStr && (
                     <>
@@ -116,25 +129,28 @@ const ScoringPanel = ({
                                     </h4>
                                     <div className="space-y-2">
                                         {(isPairCandidate ? segment.paircriteria : segment.criteria)
-                                            ?.filter((criterion) => !isPairCandidate || criterion.type === selectedGender) // Filter criteria by selected gender for pair candidates
+                                            ?.filter((criterion) => !isPairCandidate || criterion.type === selectedGender) // Filter criteria by selected gender
                                             ?.map((criterion) => (
-                                                <div key={criterion.id} className="flex flex-col items-center">
-                                                    <span className="text-gray-800 dark:text-gray-200 text-lg font-medium mb-3">
-                                                        {criterion.criteria_name || criterion.name} ({`${Math.round(criterion.weight)}%`})
-                                                    </span>
-                                                    <TextInput
-                                                        type="number"
-                                                        min="0"
-                                                        max="10"
-                                                        step="0.1"
-                                                        className="transition-transform focus:scale-105 w-full md:w-64 px-4 py-3 md:px-6 md:py-4 border-2 border-indigo-500 rounded text-center text-2xl md:text-3xl focus:ring-2 focus:ring-indigo-500 placeholder:text-sm"
+                                                isPairCandidate ? (
+                                                    <PairScoreInput
+                                                        key={criterion.id}
+                                                        segmentId={segment.id}
+                                                        criterion={criterion}
                                                         value={scores[segment.id]?.[criterion.id] || ''}
-                                                        placeholder="Enter score"
-                                                        onChange={(e) => handleScoreInputChange(segment.id, criterion.id, e.target.value)}
+                                                        onChange={handleScoreInputChange}
                                                         disabled={!selectedCandidateStr || isLocked}
-                                                        aria-label={`Score for ${criterion.criteria_name || criterion.name}`}
+                                                        gender={selectedGender}
                                                     />
-                                                </div>
+                                                ) : (
+                                                    <IndividualScoreInput
+                                                        key={criterion.id}
+                                                        segmentId={segment.id}
+                                                        criterion={criterion}
+                                                        value={scores[segment.id]?.[criterion.id] || ''}
+                                                        onChange={handleScoreInputChange}
+                                                        disabled={!selectedCandidateStr || isLocked}
+                                                    />
+                                                )
                                             ))}
                                     </div>
                                 </div>
@@ -146,18 +162,18 @@ const ScoringPanel = ({
                         <div className="flex flex-col items-center mt-6 space-y-4">
                             <span className="text-base text-gray-500">Note: Scoring is between 0-10</span>
                             <span className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                                <span className="text-lg text-white-500">Total Score: </span>
-                                <span className="border-b-2 border-gray-700 px-4">{calculateTotalScore}%</span>
-                            </span>
+  <span className="text-lg text-white-500">Total Score: </span>
+  <span className="border-b-2 border-gray-700 px-4">{totalScore}%</span>
+</span>
 
                             <button
-                                className="w-48 px-8 py-3 border-2 border-indigo-500 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white text-lg font-bold transition-all mt-6"
-                                onClick={handleSave}
-                                disabled={loading || isLocked}
-                                aria-label="Save scores"
-                            >
-                                {loading ? 'Saving...' : 'Save'}
-                            </button>
+    className="w-48 px-8 py-3 border-2 border-indigo-500 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white text-lg font-bold transition-all mt-6"
+    onClick={handleSave} // or onClick={PairhandleSave} for pair candidates
+    disabled={loading || isLocked}
+    aria-label="Save scores"
+>
+    {loading ? 'Saving...' : 'Save'}
+</button>
 
                             <button
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
