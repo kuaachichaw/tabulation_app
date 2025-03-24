@@ -115,8 +115,7 @@ export const handleSave = async (selectedCandidate, scores, segments, setLoading
 
     setLoading(true);
     try {
-        console.log("Saving scores for candidate:", selectedCandidate);
-        console.log("Formatted scores:", formattedScores);
+
     
         await toast.promise(
             axios.post(API_ENDPOINTS.SCORES, {

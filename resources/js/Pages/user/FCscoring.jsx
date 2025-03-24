@@ -31,12 +31,8 @@ export default function Scoring() {
     const [isFetching, setIsFetching] = useState(true);
     const [lockedCandidates, setLockedCandidates] = useState([]);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    // Ensure selectedCandidate is treated as a string
   const selectedCandidateStr = String(selectedCandidate);
-
-  // Determine if the selected candidate is a pair candidate
   const isPairCandidate = selectedCandidateStr.includes('-');
-
   // Determine the selected candidate's gender
   const selectedGender = isPairCandidate ? selectedCandidateStr.split('-')[1] : null;
 
