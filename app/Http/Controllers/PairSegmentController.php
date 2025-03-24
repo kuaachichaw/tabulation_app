@@ -10,10 +10,26 @@ class PairSegmentController extends Controller
 {
     // Display a list of pair segments
     public function index()
-    {
-        $pairSegments = PairSegment::with('paircriteria')->get();
-        return response()->json($pairSegments);
-    }
+{
+    $pairSegments = PairSegment::with('paircriteria')->get()->map(function ($segment) {
+        return [
+            'id' => $segment->id,
+            'pair_name' => $segment->pair_name,
+            'male_name' => $segment->male_name,
+            'female_name' => $segment->female_name,
+            'criterias' => $segment->paircriteria->map(function ($criteria) {
+                return [
+                    'id' => $criteria->id,
+                    'criteria_name' => $criteria->criteria_name,
+                    'weight' => $criteria->weight,
+                    'type' => $criteria->type
+                ];
+            })
+        ];
+    });
+    
+    return response()->json($pairSegments);
+}
 
     // Store a new pair segment
     public function store(Request $request)

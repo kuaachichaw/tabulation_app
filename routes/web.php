@@ -29,10 +29,11 @@ Route::get('/api/pair-judge-segments/{pairSegmentId}', [PairJudgeSegmentControll
 Route::post('/api/pair-judge-segments', [PairJudgeSegmentController::class, 'store']); 
  
 
-    Route::post('/pair-segments/store', [PairSegmentController::class, 'store']); // Create a new pair segment
-    Route::get('/api/pair-segments', [PairSegmentController::class, 'index']); // List all pair segments
-    Route::delete('/pair-segments/{id}', [PairSegmentController::class, 'destroy']); // Delete a pair segment
-
+Route::prefix('api')->group(function () {
+    Route::get('/pair-segments', [PairSegmentController::class, 'index']);
+    Route::post('/pair-segments', [PairSegmentController::class, 'store']);
+    Route::delete('/pair-segments/{id}', [PairSegmentController::class, 'destroy']);
+});
 
 // Pair Assignments
 Route::post('/api/pair-assignments', [JudgePairCandidateController::class, 'store']);
