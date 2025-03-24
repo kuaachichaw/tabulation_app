@@ -87,40 +87,50 @@ const ScoringPanel = ({
         pairJudgeSegments,
         isPairCandidate, // Use isPairCandidate here
         selectedGender
-      );
-      
-      const progress = calculateProgress(
+    );
+
+    const progress = calculateProgress(
         scores,
         segments,
         pairJudgeSegments,
         isPairCandidate, // Use isPairCandidate here
         selectedGender
-      );
+    );
 
     return (
         <div className="lg:col-span-9 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl relative">
             <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 pb-4">
+                {/* Conditional Rendering for Candidate Selection Message or Scoring Panel */}
                 <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6 text-center">
-                    {selectedCandidateStr ? (
+                    {!selectedCandidateStr || selectedCandidateStr === 'null' || selectedCandidateStr === 'undefined' ? (
+                        <div className="text-center">
+                            <h3 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
+                                Please Select a Candidate First
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Choose a candidate from the list to start scoring.
+                            </p>
+                        </div>
+                    ) : (
                         <>
                             Scoring for <br />
                             <span className="text-indigo-600 dark:text-indigo-400">{candidateName}</span>
                         </>
-                    ) : (
-                        "Select a Candidate First"
                     )}
                 </h3>
 
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-300 rounded-full h-2.5 dark:bg-gray-800 mb-6">
-  <div
-    className="h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
-    style={{ width: `${progress}%` }}
-  ></div>
-</div>
-
-                {selectedCandidateStr && (
+                {/* Conditionally Render Segments, Criteria, and Other Elements */}
+                {selectedCandidateStr && selectedCandidateStr !== 'null' && selectedCandidateStr !== 'undefined' && (
                     <>
+                        {/* Progress Bar */}
+                        <div className="w-full bg-gray-300 rounded-full h-2.5 dark:bg-gray-800 mb-6">
+                            <div
+                                className="h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300"
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        </div>
+
+                        {/* Segments and Criteria */}
                         {displaySegments?.length > 0 ? (
                             displaySegments.map((segment) => (
                                 <div key={segment.id} className="mb-8">
@@ -129,7 +139,7 @@ const ScoringPanel = ({
                                     </h4>
                                     <div className="space-y-2">
                                         {(isPairCandidate ? segment.paircriteria : segment.criteria)
-                                            ?.filter((criterion) => !isPairCandidate || criterion.type === selectedGender) // Filter criteria by selected gender
+                                            ?.filter((criterion) => !isPairCandidate || criterion.type === selectedGender)
                                             ?.map((criterion) => (
                                                 isPairCandidate ? (
                                                     <PairScoreInput
@@ -159,21 +169,22 @@ const ScoringPanel = ({
                             <p className="text-center text-gray-500">No segments available for scoring.</p>
                         )}
 
+                        {/* Total Score and Buttons */}
                         <div className="flex flex-col items-center mt-6 space-y-4">
                             <span className="text-base text-gray-500">Note: Scoring is between 0-10</span>
                             <span className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
-  <span className="text-lg text-white-500">Total Score: </span>
-  <span className="border-b-2 border-gray-700 px-4">{totalScore}%</span>
-</span>
+                                <span className="text-lg text-white-500">Total Score: </span>
+                                <span className="border-b-2 border-gray-700 px-4">{totalScore}%</span>
+                            </span>
 
                             <button
-    className="w-48 px-8 py-3 border-2 border-indigo-500 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white text-lg font-bold transition-all mt-6"
-    onClick={handleSave} // or onClick={PairhandleSave} for pair candidates
-    disabled={loading || isLocked}
-    aria-label="Save scores"
->
-    {loading ? 'Saving...' : 'Save'}
-</button>
+                                className="w-48 px-8 py-3 border-2 border-indigo-500 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white text-lg font-bold transition-all mt-6"
+                                onClick={handleSave}
+                                disabled={loading || isLocked}
+                                aria-label="Save scores"
+                            >
+                                {loading ? 'Saving...' : 'Save'}
+                            </button>
 
                             <button
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
