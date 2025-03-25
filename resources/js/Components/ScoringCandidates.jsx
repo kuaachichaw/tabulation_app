@@ -103,7 +103,7 @@ const ScoringCandidates = ({ candidates, pairCandidates, setIsModalOpen, selecte
                 </div>
             </motion.div>
 
-            {/* Pair Candidates Section (unchanged) */}
+            {/* Pair Candidates Section - Updated with Female first */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -141,54 +141,7 @@ const ScoringCandidates = ({ candidates, pairCandidates, setIsModalOpen, selecte
                                 </div>
 
                                 <div className="flex flex-col md:flex-row gap-4 items-center">
-                                    {/* Male Candidate */}
-                                    <button
-                                        className={`w-full md:w-1/2 text-center p-3 rounded-lg transition ${
-                                            male.isEliminated
-                                                ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed'
-                                                : isMaleSelected
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white hover:scale-105'
-                                        }`}
-                                        onClick={() => {
-                                            if (!male.isEliminated) {
-                                                onSelect(`${pair.id}-male`);
-                                                setIsModalOpen(false);
-                                            }
-                                        }}
-                                        disabled={male.isEliminated}
-                                    >
-                                        <div className="flex flex-col items-center relative">
-                                            {isMaleSelected && (
-                                                <div className="absolute top-0 right-0 bg-green-500 text-white rounded-full p-1">
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-4 w-4"
-                                                        viewBox="0 0 20 20"
-                                                        fill="currentColor"
-                                                    >
-                                                        <path
-                                                            fillRule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clipRule="evenodd"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                            )}
-                                            {male.isEliminated
-                                                ? renderEliminatedCandidate()
-                                                : (
-                                                    <>
-                                                        {renderCandidateImage(male.picture, male.name)}
-                                                        <span className="mt-2 text-sm font-medium">{male.name}</span>
-                                                    </>
-                                                )}
-                                        </div>
-                                    </button>
-
-                                    <div className="hidden md:block w-px h-20 bg-gray-200 dark:bg-gray-600"></div>
-
-                                    {/* Female Candidate */}
+                                    {/* Female Candidate - Now first */}
                                     <button
                                         className={`w-full md:w-1/2 text-center p-3 rounded-lg transition ${
                                             female.isEliminated
@@ -228,6 +181,53 @@ const ScoringCandidates = ({ candidates, pairCandidates, setIsModalOpen, selecte
                                                     <>
                                                         {renderCandidateImage(female.picture, female.name)}
                                                         <span className="mt-2 text-sm font-medium">{female.name}</span>
+                                                    </>
+                                                )}
+                                        </div>
+                                    </button>
+
+                                    <div className="hidden md:block w-px h-20 bg-gray-200 dark:bg-gray-600"></div>
+
+                                    {/* Male Candidate - Now second */}
+                                    <button
+                                        className={`w-full md:w-1/2 text-center p-3 rounded-lg transition ${
+                                            male.isEliminated
+                                                ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed'
+                                                : isMaleSelected
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-800 dark:text-gray-200 hover:bg-indigo-500 hover:text-white hover:scale-105'
+                                        }`}
+                                        onClick={() => {
+                                            if (!male.isEliminated) {
+                                                onSelect(`${pair.id}-male`);
+                                                setIsModalOpen(false);
+                                            }
+                                        }}
+                                        disabled={male.isEliminated}
+                                    >
+                                        <div className="flex flex-col items-center relative">
+                                            {isMaleSelected && (
+                                                <div className="absolute top-0 right-0 bg-green-500 text-white rounded-full p-1">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                            {male.isEliminated
+                                                ? renderEliminatedCandidate()
+                                                : (
+                                                    <>
+                                                        {renderCandidateImage(male.picture, male.name)}
+                                                        <span className="mt-2 text-sm font-medium">{male.name}</span>
                                                     </>
                                                 )}
                                         </div>

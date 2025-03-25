@@ -44,7 +44,7 @@ const PairSegmentModal = ({ isOpen, closeModal, mode = 'create' }) => {
     
         setIsLoading(true);
         try {
-            const response = await fetch('/pair-segments/store', {
+            const response = await fetch('/api/pair-segments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ const PairSegmentModal = ({ isOpen, closeModal, mode = 'create' }) => {
                     <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                         {/* Pair Name (Centered) */}
                         <div className="text-center">
-                            <InputLabel htmlFor="pair_name" value="Pair Name" />
+                            <InputLabel htmlFor="pair_name" value="Segment Title" />
                             <TextInput
                                 id="pair_name"
                                 name="pair_name"
