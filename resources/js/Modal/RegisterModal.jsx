@@ -5,7 +5,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 
 const RegisterModal = ({ isOpen, closeModal, onSuccess, onFailure, judge, mode = 'create' }) => {
-    console.log("Judge Prop in RegisterModal:", judge); // Debugging
+    
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: judge?.name || '',

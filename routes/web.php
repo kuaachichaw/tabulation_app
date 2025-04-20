@@ -18,7 +18,12 @@ use App\Http\Controllers\JudgePairCandidateController;
 use App\Http\Controllers\PairSegmentController;
 use App\Http\Controllers\PairJudgeSegmentController;
 use App\Http\Controllers\PairScoreController;
+use App\Http\Controllers\PairLeaderboardController;
 
+Route::prefix('api/leaderboard/pairs')->group(function () {
+    Route::get('segment/{segmentId}/{gender}', [PairLeaderboardController::class, 'getSegmentLeaderboard']);
+    Route::get('overall/{gender}', [PairLeaderboardController::class, 'getOverallLeaderboard']);
+});
 
 Route::post('/api/pair-scores', [PairScoreController::class, 'store'])->middleware('auth');
 Route::get('/api/pair-scores/{pairId}', [PairScoreController::class, 'show'])->middleware('auth');

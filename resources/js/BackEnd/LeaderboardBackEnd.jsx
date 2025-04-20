@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
-export const useLeaderboardBackend = () => {
+export const useLeaderboardBackend = (displayMode = 'solo') => {
     const [segments, setSegments] = useState([]);
+    const [pairSegments, setPairSegments] = useState([]);
     const [selectedSegmentId, setSelectedSegmentId] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isOverall, setIsOverall] = useState(false);
     const [error, setError] = useState(null);
     const [judges, setJudges] = useState([]);
+    const initialMount = useRef(true);
 
     const fetchData = async (url, errorMessage) => {
         try {
@@ -18,59 +20,104 @@ export const useLeaderboardBackend = () => {
             return res.data;
         } catch (err) {
             console.error(errorMessage, err);
-            setError(errorMessage);
+            // Don't set error for initial failed requests
+            if (!initialMount.current) {
+                setError(`${errorMessage}: ${err.response?.data?.message || err.message}`);
+            }
             return null;
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchJudges = useCallback(async () => {
-        const data = await fetchData('/api/judges', 'Error fetching judges');
-        if (data) setJudges(data);
-    }, []);
+    const fetchInitialData = useCallback(async () => {
+        // Always fetch judges
+        const judgesData = await fetchData('/api/judges', 'Error fetching judges');
+        if (judgesData) setJudges(judgesData);
 
-    const fetchSegments = useCallback(async () => {
-        const data = await fetchData('/api/segments', 'Failed to load segments');
-        if (data) {
-            setSegments(data);
-            if (data.length > 0) {
-                setSelectedSegmentId(data[0].id);
+        // Fetch segments based on displayMode
+        if (displayMode === 'solo') {
+            const segmentsData = await fetchData('/api/segments', 'Failed to load segments');
+            if (segmentsData) {
+                setSegments(segmentsData);
+                if (segmentsData.length > 0 && !selectedSegmentId) {
+                    setSelectedSegmentId(segmentsData[0].id);
+                }
+            }
+        } else {
+            const pairSegmentsData = await fetchData('/api/pair-segments', 'Failed to load pair segments');
+            if (pairSegmentsData) {
+                setPairSegments(pairSegmentsData);
+                // Don't auto-select segment in pair mode to prevent initial errors
             }
         }
-    }, []);
+    }, [displayMode, selectedSegmentId]);
 
-    const fetchSegmentLeaderboard = useCallback(async (displayMode = 'solo') => {
-        const data = await fetchData(
-            `/leaderboard/${selectedSegmentId}?type=${displayMode}`,
-            'Failed to load leaderboard'
-        );
-        if (data) setLeaderboard(data);
-    }, [selectedSegmentId]);
+    const fetchLeaderboardData = useCallback(async () => {
+        // Don't fetch if in pair mode without selected segment
+        if (displayMode === 'pair' && !selectedSegmentId && !isOverall) return;
+        
+        // Don't fetch if in solo mode without selected segment and not overall
+        if (displayMode === 'solo' && !selectedSegmentId && !isOverall) return;
 
-    const fetchOverallLeaderboard = useCallback(async (displayMode = 'solo') => {
-        const data = await fetchData(
-            `/leaderboard/overall?type=${displayMode}`,
-            'Failed to load overall leaderboard'
-        );
-        if (data) setLeaderboard(data);
-    }, []);
+        try {
+            setLoading(true);
+            setError(null);
 
-    useEffect(() => {
-        fetchJudges();
-        fetchSegments();
-    }, [fetchJudges, fetchSegments]);
+            if (displayMode === 'solo') {
+                const url = isOverall 
+                    ? '/leaderboard/overall' 
+                    : `/leaderboard/${selectedSegmentId}`;
+                const data = await fetchData(url, 'Failed to load leaderboard');
+                if (data) setLeaderboard(data);
+            } else {
+                // Only set error if this isn't the initial mount
+                const showError = !initialMount.current;
+                
+                const [maleData, femaleData] = await Promise.all([
+                    fetchData(
+                        isOverall 
+                            ? '/api/leaderboard/pairs/overall/male' 
+                            : `/api/leaderboard/pairs/segment/${selectedSegmentId}/male`,
+                        showError ? 'Failed to load male pairs' : ''
+                    ),
+                    fetchData(
+                        isOverall 
+                            ? '/api/leaderboard/pairs/overall/female' 
+                            : `/api/leaderboard/pairs/segment/${selectedSegmentId}/female`,
+                        showError ? 'Failed to load female pairs' : ''
+                    )
+                ]);
 
-    useEffect(() => {
-        if (isOverall) {
-            fetchOverallLeaderboard();
-        } else if (selectedSegmentId) {
-            fetchSegmentLeaderboard();
+                if (maleData && femaleData) {
+                    setLeaderboard({
+                        male: maleData.leaderboard,
+                        female: femaleData.leaderboard,
+                        segment_name: maleData.segment_name
+                    });
+                }
+            }
+        } finally {
+            setLoading(false);
+            initialMount.current = false;
         }
-    }, [selectedSegmentId, isOverall, fetchOverallLeaderboard, fetchSegmentLeaderboard]);
+    }, [displayMode, isOverall, selectedSegmentId]);
+
+    useEffect(() => {
+        fetchInitialData();
+    }, [displayMode, fetchInitialData]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchLeaderboardData();
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [fetchLeaderboardData]);
 
     return {
         segments,
+        pairSegments,
         selectedSegmentId,
         setSelectedSegmentId,
         leaderboard,
@@ -79,7 +126,7 @@ export const useLeaderboardBackend = () => {
         judges,
         isOverall,
         setIsOverall,
-        fetchSegmentLeaderboard,
-        fetchOverallLeaderboard
+        fetchLeaderboardData,
+        displayMode
     };
 };

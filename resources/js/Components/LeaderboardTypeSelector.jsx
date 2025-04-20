@@ -1,6 +1,14 @@
 import React from 'react';
 
-const LeaderboardTypeSelector = ({ isOverall, setIsOverall,setIsModalOpen, segments, selectedSegmentId, setSelectedSegmentId }) => {
+const LeaderboardTypeSelector = ({ 
+    isOverall, 
+    setIsOverall,
+    setIsModalOpen, 
+    segments, 
+    selectedSegmentId, 
+    setSelectedSegmentId,
+    displayMode = 'solo' // Add displayMode prop
+}) => {
     return (
         <div className="space-y-4">
             {/* Overall Leaderboard Button */}
@@ -18,11 +26,13 @@ const LeaderboardTypeSelector = ({ isOverall, setIsOverall,setIsModalOpen, segme
                 Overall Leaderboard
             </button>
 
-            {/* Segment Selection */}
-            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">
-                Select a Segment
+            {/* Segment Selection Header */}
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">
+                {displayMode === 'pair' ? 'Select Pair Segment' : 'Select Segment'}
             </h3>
-            <div className="space-y-4">
+            
+            {/* Segment List */}
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                 {segments.map((segment) => (
                     <button
                         key={segment.id}
@@ -33,14 +43,23 @@ const LeaderboardTypeSelector = ({ isOverall, setIsOverall,setIsModalOpen, segme
                         }`}
                         onClick={() => {
                             setSelectedSegmentId(segment.id);
-                                setIsOverall(false);
-                                setIsModalOpen(false);
+                            setIsOverall(false);
+                            setIsModalOpen(false);
                         }}
                     >
-                        {segment.name}
+                        {/* Display pair_name for pair mode, name for solo mode */}
+                        {displayMode === 'pair' ? segment.pair_name : segment.name}
+                       
                     </button>
                 ))}
             </div>
+
+            {/* Empty State */}
+            {segments.length === 0 && (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    No {displayMode === 'pair' ? 'pair' : ''} segments available
+                </div>
+            )}
         </div>
     );
 };
