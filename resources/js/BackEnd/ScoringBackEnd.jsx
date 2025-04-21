@@ -25,7 +25,7 @@ export const TOAST_MESSAGES = {
     ERROR: 'Failed to save scores.',
     INVALID_DATA: 'Invalid data received from the server.',
     LOADING_ERROR: 'Failed to load data',
-    SCORE_ERROR: 'Score must be between 0 and 10.',
+    SCORE_ERROR: 'Score must be between 1 and 10.',
     SELECT_CANDIDATE: 'Please select a candidate first.',
     FILL_SCORES: 'Please fill in all scores before saving.',
 };
@@ -64,7 +64,7 @@ export const handleScoreChange = (scores, setScores, segmentId, criterionId, val
             ...prev,
             [segmentId]: {
                 ...prev[segmentId],
-                [criterionId]: null,
+                [criterionId]: value === "" ? null : value
             },
         }));
         return;

@@ -96,7 +96,7 @@ export default function Scoring() {
                 },
             }));
         } else {
-            toast.error("Score must be between 0 and 10.");
+            toast.error("Score must be between 1 and 10.");
         }
     };
 

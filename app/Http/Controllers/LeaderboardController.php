@@ -73,59 +73,82 @@ class LeaderboardController extends Controller
     public function getOverallLeaderboard()
     {
         $segments = OverallLeaderboard::with('segment')->get();
-    
+        
         if ($segments->isEmpty()) {
             return response()->json(['error' => 'No segments configured for the overall leaderboard.'], 400);
         }
-    
+        
         $candidates = Candidate::all();
-    
+        
         $leaderboard = $candidates->map(function ($candidate) use ($segments) {
             $totalWeightedScore = 0;
             $segmentBreakdown = [];
-    
+        
             foreach ($segments as $segment) {
-                $segmentScore = Candidate::join('scores', 'candidates.id', '=', 'scores.candidate_id')
+                // Get raw average score from judges
+                $rawScore = Candidate::join('scores', 'candidates.id', '=', 'scores.candidate_id')
                     ->where('candidates.id', $candidate->id)
                     ->where('scores.segment_id', $segment->segment_id)
                     ->selectRaw('ROUND(SUM(scores.score) / COUNT(DISTINCT scores.judge_id), 2) as judge_score')
                     ->value('judge_score') ?? 0;
-    
-                if ($segmentScore <= 10) {
-                    $segmentScore *= 10;
-                }
-    
+                
+                // Determine if score needs conversion (0-10 → 0-100)
+                $segmentScore = $this->normalizeScore($rawScore);
+        
+                // Calculate weighted contribution
                 $weightedScore = ($segmentScore * ($segment->weight / 100));
                 $totalWeightedScore += $weightedScore;
-    
+        
                 $segmentBreakdown[] = [
                     'segment_name' => $segment->segment->name,
-                    'segment_score' => number_format($segmentScore, 2) . '%',
+                    'raw_score' => $rawScore, // For debugging
+                    'normalized_score' => number_format($segmentScore, 2) . '%',
                     'segment_weight' => $segment->weight . '%',
                     'weighted_contribution' => number_format($weightedScore, 3),
                 ];
             }
-    
+        
             return [
                 'id' => $candidate->id,
                 'name' => $candidate->name,
                 'picture' => $candidate->picture,
-                'total_score' => number_format($totalWeightedScore, 2), // Remove '%' to ensure correct sorting
+                'total_score' => number_format($totalWeightedScore, 2),
                 'segments' => $segmentBreakdown,
             ];
         });
+        
+        // Sort and rank
+        return $this->applyRanking($leaderboard);
+    }
     
-        // Sort by total score in descending order
-        $sortedLeaderboard = $leaderboard->sortByDesc('total_score')->values();
-    
-        // Assign ranking
-        $rankedLeaderboard = $sortedLeaderboard->map(function ($candidate, $index) {
-            $candidate['rank'] = $index + 1; // Assign rank (starting from 1)
-            $candidate['total_score'] .= '%'; // Append '%' after sorting
-            return $candidate;
+    // New helper method for score normalization
+    private function normalizeScore(float $rawScore): float
+    {
+        // Scores >100 are invalid (cap at 100%)
+        if ($rawScore > 100) {
+            return 100.0;
+        }
+        
+        // If score ≤10 AND has decimal places → assume 0-10 scale
+        if ($rawScore <= 10 && fmod($rawScore, 1) != 0) {
+            return $rawScore * 10;
+        }
+        
+        // Otherwise treat as percentage (6% stays 6%, 6.5 → invalid)
+        return $rawScore;
+    }
+    // New helper method for ranking
+    private function applyRanking($leaderboard)
+    {
+        $sorted = $leaderboard->sortByDesc(function ($item) {
+            return (float) $item['total_score'];
+        })->values();
+        
+        return $sorted->map(function ($item, $index) {
+            $item['rank'] = $index + 1;
+            $item['total_score'] .= '%';
+            return $item;
         });
-    
-        return response()->json($rankedLeaderboard);
     }
     
     

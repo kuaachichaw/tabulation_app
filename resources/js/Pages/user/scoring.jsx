@@ -121,7 +121,7 @@ export default function Scoring() {
 
         const numericValue = parseFloat(value);
         if (isNaN(numericValue) || numericValue < 0 || numericValue > 10) {
-            toast.error("Score must be between 0 and 10.");
+            toast.error("Score must be between 1 and 10.");
             return;
         }
 
