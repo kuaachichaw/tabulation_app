@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import IndividualScoreInput from '@/Components/IndividualScoreInput';
@@ -11,14 +11,17 @@ const ScoringPanel = ({
     segments,
     pairJudgeSegments,
     scores,
-    handleScoreChange, // Use the function passed from the parent
+    handleScoreChange,
     calculateTotalScore,
     calculateProgress,
     loading,
     lockedCandidates,
     handleSave,
     toggleLock,
+    judgeCount, // Added prop for judge count
 }) => {
+    const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+    
     // Ensure selectedCandidate is treated as a string
     const selectedCandidateStr = useMemo(() => String(selectedCandidate), [selectedCandidate]);
     const isPairCandidate = useMemo(() => selectedCandidateStr.includes('-'), [selectedCandidateStr]);
@@ -37,9 +40,9 @@ const ScoringPanel = ({
             return pairJudgeSegments.filter((segment) => {
                 // Filter segments based on the selected gender
                 if (selectedGender === 'male') {
-                    return segment.male_name; // Display segments for male candidates
+                    return segment.male_name;
                 } else if (selectedGender === 'female') {
-                    return segment.female_name; // Display segments for female candidates
+                    return segment.female_name;
                 }
                 return false;
             });
@@ -52,21 +55,17 @@ const ScoringPanel = ({
         if (!selectedCandidateStr) return null;
 
         if (isPairCandidate) {
-            // For pair candidates, extract the ID and find the candidate
             const pairId = selectedCandidateStr.split('-')[0];
             const pairCandidate = pairCandidates.find((p) => p.id === Number(pairId));
             if (!pairCandidate) return 'Unknown Pair Candidate';
 
-            // Get the individual candidate's name based on the selected gender
             const individualName = selectedGender === 'male' 
                 ? pairCandidate.male.name 
                 : pairCandidate.female.name;
 
-            // Add gender label
             const genderLabel = selectedGender === 'male' ? '(Male)' : '(Female)';
             return `${individualName} ${genderLabel}`;
         } else {
-            // For individual candidates, find the candidate by ID
             const candidateId = Number(selectedCandidateStr);
             const candidate = candidates.find((c) => c.id === candidateId);
             return candidate?.name || 'Unknown Candidate';
@@ -76,8 +75,20 @@ const ScoringPanel = ({
     // Check if the selected candidate is locked
     const isLocked = useMemo(() => lockedCandidates.includes(selectedCandidateStr), [lockedCandidates, selectedCandidateStr]);
 
-    // Handle score input changes
+    // Handle score input changes with validation
     const handleScoreInputChange = (segmentId, criterionId, value) => {
+        const numericValue = parseFloat(value);
+        
+        if (isNaN(numericValue)) {
+            toast.error('Please enter a valid number');
+            return;
+        }
+        
+        if (numericValue < 0 || numericValue > 10) {
+            toast.error('Scores must be between 0 and 10');
+            return;
+        }
+        
         handleScoreChange(segmentId, criterionId, value);
     };
 
@@ -85,7 +96,7 @@ const ScoringPanel = ({
         scores,
         segments,
         pairJudgeSegments,
-        isPairCandidate, // Use isPairCandidate here
+        isPairCandidate,
         selectedGender
     );
 
@@ -93,7 +104,7 @@ const ScoringPanel = ({
         scores,
         segments,
         pairJudgeSegments,
-        isPairCandidate, // Use isPairCandidate here
+        isPairCandidate,
         selectedGender
     );
 
@@ -172,10 +183,15 @@ const ScoringPanel = ({
                         {/* Total Score and Buttons */}
                         <div className="flex flex-col items-center mt-6 space-y-4">
                             <span className="text-base text-gray-500">Note: Scoring is between 0-10</span>
-                            <span className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                                <span className="text-lg text-white-500">Total Score: </span>
-                                <span className="border-b-2 border-gray-700 px-4">{totalScore}%</span>
-                            </span>
+                            
+                            <div className="text-center">
+                                <span className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
+                                    <span className="text-lg text-white-500">Total Score: </span>
+                                    <span className="border-b-2 border-gray-700 px-4">{totalScore}%</span>
+                                </span>
+                               
+                               
+                            </div>
 
                             <button
                                 className="w-48 px-8 py-3 border-2 border-indigo-500 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white text-lg font-bold transition-all mt-6"
@@ -183,21 +199,50 @@ const ScoringPanel = ({
                                 disabled={loading || isLocked}
                                 aria-label="Save scores"
                             >
-                                {loading ? 'Saving...' : 'Save'}
+                                {loading ? (
+                                    <div className="flex items-center justify-center">
+                                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Saving...
+                                    </div>
+                                ) : 'Save'}
                             </button>
 
                             <button
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
+                                className={`px-4 py-2 rounded-lg transition duration-300 flex items-center ${
+                                    isLocked 
+                                        ? 'bg-green-500 hover:bg-green-600 text-white' 
+                                        : 'bg-red-500 hover:bg-red-600 text-white'
+                                }`}
                                 onClick={() => toggleLock(selectedCandidateStr)}
                                 disabled={!selectedCandidateStr}
                                 aria-label={isLocked ? "Unlock scores" : "Lock scores"}
                             >
-                                {isLocked ? "Unlock Scores" : "Lock Scores"}
+                                {isLocked ? (
+                                    <>
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Scores Locked
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                        </svg>
+                                        Lock Scores
+                                    </>
+                                )}
                             </button>
                         </div>
                     </>
                 )}
             </div>
+
+         
+
             <ToastContainer />
         </div>
     );

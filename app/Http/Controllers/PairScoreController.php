@@ -38,10 +38,12 @@ class PairScoreController extends Controller
     // Fetch scores for a pair candidate
 public function show($pairId, Request $request)
 {
-    $gender = $request->query('gender'); // Get gender from query parameters
+    $gender = $request->query('gender');
+    $judgeId = auth()->id(); // Get current judge's ID
 
     $scores = PairScore::where('pair_id', $pairId)
         ->where('gender', $gender)
+        ->where('judge_id', $judgeId) // Add this filter
         ->get(['pair_segment_id', 'pair_criteria_id', 'score']);
 
     return response()->json($scores);
