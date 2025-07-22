@@ -3,11 +3,13 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { BiMenu } from "react-icons/bi";
+import { BiMenu, BiChevronDown, BiChevronUp } from "react-icons/bi";
 
 export default function AdminLayout({ header, children }) {
     const user = usePage().props.auth.user;
     const [isOpen, setIsOpen] = useState(false);
+    const [assignListOpen, setAssignListOpen] = useState(false);
+    const [managementOpen, setManagementOpen] = useState(false);
 
     return (
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -30,17 +32,11 @@ export default function AdminLayout({ header, children }) {
                     </button>
                 </div>
 
-                <nav className="mt-4 flex-grow overflow-auto ">
-                    <ul className="space-y-2">
+                <nav className="mt-4 flex-grow overflow-auto">
+                    <ul className="space-y-2 px-2">
                         {[
                             { name: "Dashboard", routeName: "admin" },
                             { name: "LeaderBoard", routeName: "Leaderboard" },
-                            { name: "Judge List", routeName: "Ajudge" },
-                            { name: "Candidate List", routeName: "Acandidate" },
-                            { name: "Segment List", routeName: "Asegment" },
-                            { name: "Assign Judge to Candidate", routeName: "AasignCandidate" },
-                            { name: "Assign Judge to Segment", routeName: "AasignSegment" },
-                            { name: "Scoring", routeName: "scoring" },
                         ].map(({ name, routeName }) => (
                             <li key={routeName}>
                                 <NavLink
@@ -58,6 +54,153 @@ export default function AdminLayout({ header, children }) {
                                 </NavLink>
                             </li>
                         ))}
+
+                        {/* Management Dropdown */}
+                        <li>
+                            <button
+                                onClick={() => setManagementOpen(!managementOpen)}
+                                className={`flex items-center justify-between w-full px-6 py-3 rounded-lg transition ${
+                                    route().current('Ajudge') || route().current('Acandidate') || route().current('Asegment')
+                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                        : "hover:bg-gray-800 hover:text-white"
+                                }`}
+                            >
+                                <span>Management</span>
+                                {managementOpen ? <BiChevronUp /> : <BiChevronDown />}
+                            </button>
+                            
+                            {managementOpen && (
+                                <ul className="mt-2 ml-4 space-y-1">
+                                    <li>
+                                        <NavLink
+                                            href={route('Ajudge')}
+                                            active={route().current('Ajudge')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Judges
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            href={route('Acandidate')}
+                                            active={route().current('Acandidate')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Candidates
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            href={route('Asegment')}
+                                            active={route().current('Asegment')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Segments
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            )}
+                        </li>
+
+                        {/* Assign List Dropdown */}
+                        <li>
+                            <button
+                                onClick={() => setAssignListOpen(!assignListOpen)}
+                                className={`flex items-center justify-between w-full px-6 py-3 rounded-lg transition ${
+                                    route().current('AasignCandidate') || route().current('AasignSegment')
+                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                        : "hover:bg-gray-800 hover:text-white"
+                                }`}
+                            >
+                                <span>Assign List</span>
+                                {assignListOpen ? <BiChevronUp /> : <BiChevronDown />}
+                            </button>
+                            
+                            {assignListOpen && (
+                                <ul className="mt-2 ml-4 space-y-1">
+                                    <li>
+                                        <NavLink
+                                            href={route('AasignCandidate')}
+                                            active={route().current('AasignCandidate')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Assign Judge to Candidate
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            href={route('AasignSegment')}
+                                            active={route().current('AasignSegment')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Assign Judge to Segment
+                                        </NavLink>
+                                    </li>
+                                     <li>
+                                        <NavLink
+                                            href={route('Adisplay')}
+                                            active={route().current('Adisplay')}
+                                            className={({ isActive }) =>
+                                                `flex items-center w-full px-6 py-2 rounded-lg transition ${
+                                                    isActive
+                                                        ? "bg-gray-700 text-white font-semibold shadow"
+                                                        : "hover:bg-gray-800 hover:text-white"
+                                                }`
+                                            }
+                                        >
+                                            Assign Display
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            )}
+                        </li>
+
+                        {/* Scoring (now placed below the dropdowns) */}
+                        <li>
+                            <NavLink
+                                href={route('scoring')}
+                                active={route().current('scoring')}
+                                className={({ isActive }) =>
+                                    `flex items-center w-full px-6 py-3 rounded-lg transition ${
+                                        isActive
+                                            ? "bg-gray-700 text-white font-semibold shadow"
+                                            : "hover:bg-gray-800 hover:text-white"
+                                    }`
+                                }
+                            >
+                                Scoring
+                            </NavLink>
+                        </li>
                     </ul>
                 </nav>
             </aside>

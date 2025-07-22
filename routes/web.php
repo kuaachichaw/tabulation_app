@@ -19,6 +19,10 @@ use App\Http\Controllers\PairSegmentController;
 use App\Http\Controllers\PairJudgeSegmentController;
 use App\Http\Controllers\PairScoreController;
 use App\Http\Controllers\PairLeaderboardController;
+use App\Http\Controllers\DisplayOptionController;
+
+Route::post('/display/save', [DisplayOptionController::class, 'save'])->name('display.save');
+Route::get('/display/get', [DisplayOptionController::class, 'get'])->name('display.get');
 
 Route::prefix('api/leaderboard/pairs')->group(function () {
     Route::get('segment/{segmentId}/{gender}', [PairLeaderboardController::class, 'getSegmentLeaderboard']);
@@ -126,6 +130,10 @@ Route::get('/ac', function () {
 Route::get('/aj', function () {
     return Inertia::render('admin/Ajudge'); 
 })->name('Ajudge');
+
+Route::get('/ad', function () {
+    return Inertia::render('admin/Adisplay'); 
+})->name('Adisplay');
 
 Route::get('/143432', function () {
     return Inertia::render('admin/admin'); 

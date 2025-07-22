@@ -52,13 +52,7 @@ export const PairLeaderBoard = ({
               ? `Total: ${parseFloat(candidate.total_score?.replace('%', '') || 0).toFixed(2)}%`
               : `Score: ${candidate.judge_score}%`}
           </p>
-          <div className="mt-2">
-            {gender === 'male' ? (
-              <FaMale className="text-blue-500" size={20} />
-            ) : (
-              <FaFemale className="text-pink-500" size={20} />
-            )}
-          </div>
+         
         </motion.div>
       ))}
     </div>
@@ -67,17 +61,7 @@ export const PairLeaderBoard = ({
   // Contestant list component for pairs
   const ContestantList = ({ contestants, gender }) => (
     <div className="mt-6">
-      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center justify-center gap-2">
-        {gender === 'male' ? (
-          <>
-            <FaMale className="text-blue-500" /> Male Contestants
-          </>
-        ) : (
-          <>
-            <FaFemale className="text-pink-500" /> Female Contestants
-          </>
-        )}
-      </h3>
+  
       <ul className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
         {contestants.slice(3).map((candidate, index) => (
           <li key={`${gender}-${candidate.id}`} className="flex flex-col p-3 border-b last:border-b-0">
@@ -128,6 +112,8 @@ export const PairLeaderBoard = ({
       <section>
         <h3 className="text-lg font-semibold mb-2">
           {genderFilter === 'male' ? (
+
+            
             <span className="text-blue-600 dark:text-blue-400">Male Contestants</span>
           ) : (
             <span className="text-pink-600 dark:text-pink-400">Female Contestants</span>

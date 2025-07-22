@@ -7,11 +7,32 @@ import 'react-toastify/dist/ReactToastify.css';
 import FlexContainer from '@/Components/FlexContainer';
 import useDrag from '@/Components/useDrag';
 import CandidateSelector from '@/Components/CandidateSelector';
-import { BiLogoSlack } from "react-icons/bi";
-import { BiSolidUser } from "react-icons/bi";
+import { BiLogoSlack, BiSolidUser, BiSave } from "react-icons/bi";
 import { HiUsers } from "react-icons/hi2";
+import { BiUserX } from "react-icons/bi";
 
-export default function AassignCandidate() {
+const AnimatedToggle = ({ isOn, onClick, color = 'green' }) => {
+  const colorClasses = {
+    green: 'bg-green-500',
+    pink: 'bg-pink-500',
+    blue: 'bg-blue-500',
+  };
+
+  return (
+    <div 
+      onClick={onClick}
+      className={`w-14 h-7 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+        isOn ? colorClasses[color] : 'bg-gray-400'
+      }`}
+    >
+      <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${
+        isOn ? 'translate-x-7' : ''
+      }`}/>
+    </div>
+  );
+};
+
+export default function AssignCandidate() {
     const [judges, setJudges] = useState([]);
     const [candidates, setCandidates] = useState([]);
     const [pairCandidates, setPairCandidates] = useState([]);
@@ -20,13 +41,13 @@ export default function AassignCandidate() {
     const [selectAll, setSelectAll] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [displayMode, setDisplayMode] = useState('solo'); // 'solo' or 'pair'
+    const [displayMode, setDisplayMode] = useState('solo');
+    const [showConfirm, setShowConfirm] = useState(false);
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
         x: window.innerWidth - 100,
         y: 20,
     });
 
-    // Fetch judges, candidates, and pair candidates
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -45,7 +66,6 @@ export default function AassignCandidate() {
         fetchData();
     }, []);
 
-    // Fetch assignments for the selected judge
     useEffect(() => {
         if (!selectedJudge) return;
 
@@ -55,13 +75,11 @@ export default function AassignCandidate() {
                 const res = await axios.get(endpoint);
 
                 if (displayMode === 'solo') {
-                    // Process solo candidates
                     const assigned = res.data.reduce((acc, id) => ({ ...acc, [id]: true }), {});
                     setAssignments(assigned);
                     const allAssigned = candidates.every(candidate => assigned[candidate.id]);
                     setSelectAll(allAssigned ? true : false);
                 } else {
-                    // Process pair candidates
                     const assigned = Object.keys(res.data).reduce((acc, pairId) => ({
                         ...acc,
                         [pairId]: {
@@ -81,17 +99,14 @@ export default function AassignCandidate() {
         fetchAssignments();
     }, [selectedJudge, candidates, pairCandidates, displayMode]);
 
-    // Toggle assignment for a candidate or pair
     const handleToggle = (id, type = null) => {
         setAssignments((prev) => {
             if (displayMode === 'solo') {
-                // Solo mode: Toggle the candidate's assignment
                 const updatedAssignments = { ...prev, [id]: !prev[id] };
                 const allAssigned = candidates.every(candidate => updatedAssignments[candidate.id]);
                 setSelectAll(allAssigned ? true : false);
                 return updatedAssignments;
             } else {
-                // Pair mode: Toggle male or female assignment
                 const updatedAssignments = {
                     ...prev,
                     [id]: {
@@ -106,7 +121,6 @@ export default function AassignCandidate() {
         });
     };
 
-    // Select or deselect all candidates or pairs
     const handleSelectAll = () => {
         const newState = selectAll ? false : true;
         setSelectAll(newState);
@@ -123,13 +137,13 @@ export default function AassignCandidate() {
         setAssignments(updatedAssignments);
     };
 
-    // Save assignments
     const handleSave = async () => {
         if (!selectedJudge) {
             toast.error('Please select a judge first.');
             return;
         }
         try {
+            setLoading(true);
             const endpoint = displayMode === 'solo' ? '/api/assignments' : '/api/pair-assignments';
             const payload = displayMode === 'solo'
                 ? { judge_id: selectedJudge, assignments }
@@ -147,6 +161,9 @@ export default function AassignCandidate() {
             toast.success('Assignments saved successfully');
         } catch (error) {
             toast.error('Failed to save assignments');
+        } finally {
+            setLoading(false);
+            setShowConfirm(false);
         }
     };
 
@@ -202,112 +219,256 @@ export default function AassignCandidate() {
                     </>
                 )}
 
-<div className="col-span-3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg relative">
-    {/* Assign a Judge to Candidates Heading */}
-    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-6">
-        Assign {selectedJudge ? judges.find(j => j.id === selectedJudge)?.name : 'a Judge'} to Candidates
-    </h3>
-
-{/* Solo and Pair Candidates Buttons */}
-<div className="flex justify-center mb-6">
-        <div className="flex items-center gap-4">
-        <button
-            onClick={() => setDisplayMode('solo')}
-            className={`px-3 md:px-4 py-1 md:py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center justify-center gap-2 text-sm md:text-base ${
-                displayMode === 'solo'
-                    ? 'bg-indigo-500 text-white hover:bg-indigo-700'
-                    : 'bg-gray-500 text-white hover:bg-gray-600'
-            }`}
-        >
-            <BiSolidUser size={18} /> Solo Candidates
-        </button>
-        <button
-            onClick={() => setDisplayMode('pair')}
-            className={`px-3 md:px-4 py-1 md:py-2 rounded-lg transition duration-200 ease-in-out shadow-md flex items-center justify-center gap-2 text-sm md:text-base ${
-                displayMode === 'pair'
-                    ? 'bg-indigo-500 text-white hover:bg-indigo-700'
-                    : 'bg-gray-500 text-white hover:bg-gray-600'
-            }`}
-        >
-            <HiUsers size={18} /> Pair Candidates
-        </button>
-    </div>
-</div>
-
-
-
-    {/* Select All Toggle (Positioned to the Right) */}
-    <div className="absolute top-4 right-4">
-        <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600 dark:text-gray-300 font-semibold">Select All</span>
-            <label className="relative inline-flex items-center cursor-pointer" onClick={handleSelectAll}>
-                <div className={`w-14 h-7 rounded-full transition-colors duration-300 ${selectAll === null ? 'bg-gray-400' : selectAll ? 'bg-green-600' : 'bg-red-600'}`}>
-                    <div className={`absolute top-[2px] left-[2px] w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${selectAll ? 'translate-x-7' : 'translate-x-0'}`}></div>
-                </div>
-            </label>
-        </div>
-    </div>
-
-    {/* Candidates Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {displayMode === 'solo'
-            ? candidates.map((candidate) => (
-                <div key={candidate.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-                    <img src={`/storage/${candidate.picture}`} alt={candidate.name} className="w-24 h-25 rounded-full object-cover mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">{candidate.name}</h4>
-                    <label className="mt-4 flex items-center space-x-2 cursor-pointer">
-                        <div className={`relative w-14 h-7 flex items-center rounded-full cursor-pointer transition-colors duration-300 ${assignments[candidate.id] ? 'bg-green-600' : 'bg-red-600'}`} onClick={() => handleToggle(candidate.id)}>
-                            <div className={`absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${assignments[candidate.id] ? 'translate-x-7' : ''}`}></div>
+                <div className="col-span-3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg relative">
+                    {selectedJudge && (
+                        <div className="mb-6 p-3 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center">
+                            <BiSolidUser className="mr-2 text-indigo-600 dark:text-indigo-300" />
+                            <span className="font-bold">Selected Judge: </span>
+                            <span className="ml-2 text-indigo-700 dark:text-indigo-200">
+                                {judges.find(j => j.id === selectedJudge)?.name}
+                            </span>
                         </div>
-                    </label>
-                </div>
-            ))
-            : pairCandidates.map((pair) => (
-                <div key={pair.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow p-6 flex flex-col items-center justify-center hover:shadow-lg transition">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-200 mb-4">
-                        {pair.pair_name}
-                    </h2>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        {/* Female Candidate */}
-                        <div className="flex flex-col items-center">
-                            <img src={`http://localhost:8000/storage/${pair.female_picture}`} alt="Female Candidate" className="w-24 h-24 rounded-full object-cover mb-4" />
-                            <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">{pair.female_name}</h4>
-                            <p className="text-gray-500 dark:text-gray-300 text-center">Age: {pair.female_age}</p>
-                            <p className="text-gray-500 dark:text-gray-300 text-center">Vital: {pair.female_vital}</p>
-                            <label className="mt-4 flex items-center space-x-2 cursor-pointer">
-                                <div className={`relative w-14 h-7 flex items-center rounded-full cursor-pointer transition-colors duration-300 ${assignments[pair.id]?.female ? 'bg-green-600' : 'bg-red-600'}`} onClick={() => handleToggle(pair.id, 'female')}>
-                                    <div className={`absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${assignments[pair.id]?.female ? 'translate-x-7' : ''}`}></div>
-                                </div>
+                    )}
+                  <div className="py-1">
+                                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                                     <div className="overflow-hidden bg-white dark:bg-gray-800 shadow rounded-xl">
+                                   
+                                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                                                 <div>
+                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                         Candidate Management
+                                                     </h3>
+                                                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                                         {displayMode === 'solo' ? 
+                                                             "Manage individual candidates" : 
+                                                             "Manage paired candidates"}
+                                                     </p>
+                                                 </div>
+                                                 
+                                                 <div className="flex flex-col sm:flex-row gap-3">
+                                                     <div className="inline-flex rounded-md shadow-sm">
+                                                         <button
+                                                             onClick={() => setDisplayMode('solo')}
+                                                             className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors duration-200 ${
+                                                                 displayMode === 'solo'
+                                                                     ? 'bg-indigo-600 text-white'
+                                                                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                                             }`}
+                                                         >
+                                                             <span className="flex items-center gap-2">
+                                                                 <BiSolidUser size={16} /> Solo
+                                                             </span>
+                                                         </button>
+                                                         <button
+                                                             onClick={() => setDisplayMode('pair')}
+                                                             className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors duration-200 ${
+                                                                 displayMode === 'pair'
+                                                                     ? 'bg-indigo-600 text-white'
+                                                                     : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                                             }`}
+                                                         >
+                                                             <span className="flex items-center gap-2">
+                                                                 <HiUsers size={16} /> Pair
+                                                             </span>
+                                                         </button>
+                                                     </div>
+                                                                      <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-300 font-semibold">Select All</span>
+                            <label className="relative inline-flex items-center cursor-pointer" onClick={handleSelectAll}>
+                                <AnimatedToggle isOn={selectAll === true} onClick={handleSelectAll} />
                             </label>
                         </div>
+                                                  
+                                                 </div>
+                                             </div>
+                 
+                           
+                                     
+                                     </div>
+                                 </div>
+                             </div>
 
-                        {/* Male Candidate */}
-                        <div className="flex flex-col items-center">
-                            <img src={`http://localhost:8000/storage/${pair.male_picture}`} alt="Male Candidate" className="w-24 h-24 rounded-full object-cover mb-4" />
-                            <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">{pair.male_name}</h4>
-                            <p className="text-gray-500 dark:text-gray-300 text-center">Age: {pair.male_age}</p>
-                            <p className="text-gray-500 dark:text-gray-300 text-center">Vital: {pair.male_vital}</p>
-                            <label className="mt-4 flex items-center space-x-2 cursor-pointer">
-                                <div className={`relative w-14 h-7 flex items-center rounded-full cursor-pointer transition-colors duration-300 ${assignments[pair.id]?.male ? 'bg-green-600' : 'bg-red-600'}`} onClick={() => handleToggle(pair.id, 'male')}>
-                                    <div className={`absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${assignments[pair.id]?.male ? 'translate-x-7' : ''}`}></div>
+                    
+                       
+                   
+
+                    {candidates.length === 0 && !loading && (
+                        <div className="col-span-3 text-center py-12">
+                            <BiUserX className="mx-auto text-5xl text-gray-400 dark:text-gray-500" />
+                            <h3 className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">
+                                No candidates available
+                            </h3>
+                            <p className="mt-1 text-gray-500 dark:text-gray-400">
+                                Please add candidates first before assigning judges
+                            </p>
+                        </div>
+                    )}
+
+                    {candidates.length === 0 && loading && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 animate-pulse"></div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {displayMode === 'solo'
+                            ? candidates.map((candidate) => (
+                                <div 
+                                    key={candidate.id} 
+                                    className={`
+                                        relative bg-white dark:bg-gray-700 rounded-xl shadow-md p-4 
+                                        transition-all duration-300 hover:shadow-lg hover:-translate-y-1
+                                        border-l-4 ${assignments[candidate.id] ? 'border-green-500' : 'border-transparent'}
+                                    `}
+                                >
+                                    {assignments[candidate.id] && (
+                                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                            Assigned
+                                        </div>
+                                    )}
+                                    <img 
+                                        src={`/storage/${candidate.picture}`} 
+                                        alt={candidate.name} 
+                                        className="w-24 h-24 rounded-full object-cover mb-4 mx-auto"
+                                    />
+                                    <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">
+                                        {candidate.name}
+                                    </h4>
+                                    <div className="mt-4 flex justify-center">
+                                        <AnimatedToggle 
+                                            isOn={assignments[candidate.id]} 
+                                            onClick={() => handleToggle(candidate.id)} 
+                                        />
+                                    </div>
                                 </div>
-                            </label>
+                            ))
+                            : pairCandidates.map((pair) => (
+                                <div 
+                                    key={pair.id} 
+                                    className="relative bg-white dark:bg-gray-700 rounded-xl shadow-md p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                                >
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-200 mb-4 text-center">
+                                        {pair.pair_name}
+                                    </h2>
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-6">
+                                        {/* Female Candidate */}
+                                        <div className={`
+                                            flex-1 flex flex-col items-center p-4 rounded-lg
+                                            border-l-4 ${assignments[pair.id]?.female ? 'border-pink-500' : 'border-transparent'}
+                                            ${assignments[pair.id]?.female ? 'bg-pink-50 dark:bg-pink-900/20' : ''}
+                                        `}>
+                                            <img 
+                                                src={`/storage/${pair.female_picture}`} 
+                                                alt={pair.female_name} 
+                                                className="w-24 h-24 rounded-full object-cover mb-4 mx-auto"
+                                            />
+                                            <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                                {pair.female_name}
+                                            </h4>
+                                            {assignments[pair.id]?.female && (
+                                                <div className="absolute top-2 right-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-full">
+                                                    Assigned
+                                                </div>
+                                            )}
+                                            <div className="mt-4">
+                                                <AnimatedToggle 
+                                                    isOn={assignments[pair.id]?.female} 
+                                                    onClick={() => handleToggle(pair.id, 'female')}
+                                                    color="pink"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Male Candidate */}
+                                        <div className={`
+                                            flex-1 flex flex-col items-center p-4 rounded-lg
+                                            border-l-4 ${assignments[pair.id]?.male ? 'border-blue-500' : 'border-transparent'}
+                                            ${assignments[pair.id]?.male ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
+                                        `}>
+                                            <img 
+                                                src={`/storage/${pair.male_picture}`} 
+                                                alt={pair.male_name} 
+                                                className="w-24 h-24 rounded-full object-cover mb-4 mx-auto"
+                                            />
+                                            <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                                {pair.male_name}
+                                            </h4>
+                                            {assignments[pair.id]?.male && (
+                                                <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                                    Assigned
+                                                </div>
+                                            )}
+                                            <div className="mt-4">
+                                                <AnimatedToggle 
+                                                    isOn={assignments[pair.id]?.male} 
+                                                    onClick={() => handleToggle(pair.id, 'male')}
+                                                    color="blue"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+
+                    {candidates.length > 0 && (
+                        <div className="flex justify-center mt-8">
+                            <button 
+                                onClick={() => setShowConfirm(true)}
+                                disabled={!selectedJudge || loading}
+                                className={`
+                                    px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center
+                                    ${selectedJudge 
+                                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-xl'
+                                        : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+                                    }
+                                    ${loading && 'opacity-75'}
+                                `}
+                            >
+                                {loading ? (
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : (
+                                    <BiSave className="mr-2" />
+                                )}
+                                Save Assignments
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </FlexContainer>
+
+            {showConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md">
+                        <h3 className="text-lg font-medium mb-4 dark:text-white">Confirm Assignments</h3>
+                        <p className="dark:text-gray-300">
+                            Are you sure you want to assign these candidates to the judge?
+                        </p>
+                        <div className="flex justify-end space-x-3 mt-6">
+                            <button 
+                                onClick={() => setShowConfirm(false)}
+                                className="px-4 py-2 border rounded-lg dark:text-gray-300 dark:border-gray-600"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleSave}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                                Confirm
+                            </button>
                         </div>
                     </div>
                 </div>
-            ))}
-    </div>
+            )}
 
-    {/* Save Assignments Button */}
-    <div className="flex justify-center mt-8">
-        <button className={`px-6 py-3 text-white rounded-lg transition duration-300 ${selectedJudge && Object.keys(assignments).length > 0 ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}`} 
-            onClick={handleSave} disabled={!selectedJudge || loading}>
-            {loading ? 'Saving...' : 'Save Assignments'}
-        </button>
-    </div>
-</div>
-            </FlexContainer>
-            <ToastContainer />
+            <ToastContainer position="bottom-right" autoClose={3000} />
         </AdminLayout>
     );
 }

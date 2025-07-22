@@ -54,7 +54,7 @@ export default function ExportCSVModal({
             );
             row.push(segmentObj ? `${segmentObj.weighted_contribution}%` : "N/A");
           });
-          row.push(candidate.total_score ? `${candidate.total_score}%` : "N/A");
+          row.push(candidate.total_score ? `${candidate.total_score}` : "N/A");
           return row;
         }),
         [], // 🏆 Empty row for spacing
@@ -83,7 +83,7 @@ export default function ExportCSVModal({
             const scoreObj = candidate.judge_scores.find((s) => s.judge === judge);
             row.push(scoreObj ? `${scoreObj.judge_total}%` : "N/A");
           });
-          row.push(candidate.judge_total ? `${candidate.judge_total}%` : "N/A");
+          row.push(candidate.judge_total ? `${candidate.judge_total}` : "N/A");
           return row;
         }),
         [], // 🏆 Empty row for spacing
