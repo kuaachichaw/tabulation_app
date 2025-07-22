@@ -12,8 +12,8 @@ const CandidateSelector = ({ judges, selectedJudge, onSelectJudge, setIsModalOpe
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-indigo-600 hover:text-white'
                     }`}
                     onClick={() => {
-                        onSelectJudge(judge.id); // Handle judge selection
-                        setIsModalOpen(false); // Close modal after selection
+                        onSelectJudge(judge.id);
+                        setIsModalOpen?.(false); // Optional chaining
                     }}
                 >
                     <div className="flex flex-col items-center">
