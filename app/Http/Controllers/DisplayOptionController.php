@@ -10,7 +10,6 @@ class DisplayOptionController extends Controller
     public function get()
     {
         try {
-            // Fetch the first record or return defaults if none exists
             $settings = DisplayOption::firstOrNew([]);
             
             return response()->json([
@@ -38,7 +37,7 @@ class DisplayOptionController extends Controller
 
         try {
             DisplayOption::updateOrCreate(
-                ['id' => 1], // Ensure a single row exists
+                ['id' => 1],
                 $validated
             );
 
