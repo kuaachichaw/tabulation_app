@@ -1,44 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head } from '@inertiajs/react';
-import axios from 'axios';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import FlexContainer from '@/Components/FlexContainer';
 import useDrag from '@/Components/useDrag';
 import SegmentSelector from '@/Components/SegmentSelector';
-import { BiLogoSlack, BiSave } from "react-icons/bi";
-import { BiUserX } from "react-icons/bi";
-
-const AnimatedToggle = ({ isOn, onClick, color = 'green' }) => {
-  const colorClasses = {
-    green: 'bg-green-500',
-    pink: 'bg-pink-500',
-    blue: 'bg-blue-500',
-    indigo: 'bg-indigo-500',
-  };
-
-  return (
-    <div 
-      onClick={onClick}
-      className={`w-14 h-7 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${
-        isOn ? colorClasses[color] : 'bg-gray-400'
-      }`}
-    >
-      <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${
-        isOn ? 'translate-x-7' : ''
-      }`}/>
-    </div>
-  );
-};
+import { BiLogoSlack, BiSave, BiUserX } from "react-icons/bi";
+import { AnimatedToggle } from "@/Components/AnimatedToggle";
+import { useAssignSegmentBackend } from '@/BackEnd/AssignSegmentBackend';
 
 export default function AssignSegment() {
-    const [judges, setJudges] = useState([]);
-    const [segments, setSegments] = useState([]);
-    const [selectedSegmentId, setSelectedSegmentId] = useState(null);
-    const [assignments, setAssignments] = useState({});
-    const [selectAll, setSelectAll] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
@@ -46,138 +18,60 @@ export default function AssignSegment() {
         y: 20,
     });
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [judgesRes, soloSegmentsRes, pairSegmentsRes] = await Promise.all([
-                    axios.get('/api/judges'),
-                    axios.get('/api/segments'),
-                    axios.get('/api/pair-segments'),
-                ]);
-                setJudges(judgesRes.data);
-
-                const combinedSegments = [
-                    ...soloSegmentsRes.data.map(segment => ({ ...segment, type: 'solo' })),
-                    ...pairSegmentsRes.data.map(segment => ({ ...segment, type: 'pair' })),
-                ];
-                setSegments(combinedSegments);
-            } catch (error) {
-                toast.error('Failed to load data');
-            }
-        };
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (!selectedSegmentId || judges.length === 0) return;
-    
-        const fetchAssignments = async () => {
-            try {
-                const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
-                const endpoint = selectedSegment.type === 'solo' ? '/api/judge-segment' : '/api/pair-judge-segments';
-    
-                const res = await axios.get(`${endpoint}/${selectedSegmentId}`);
-    
-                let assigned = {};
-                if (selectedSegment.type === 'solo') {
-                    assigned = res.data.reduce((acc, judgeId) => {
-                        acc[judgeId] = true;
-                        return acc;
-                    }, {});
-                } else {
-                    assigned = res.data.reduce((acc, assignment) => {
-                        acc[assignment.judge.id] = true;
-                        return acc;
-                    }, {});
-                }
-    
-                setAssignments(assigned);
-                setSelectAll(judges.every(judge => assigned[judge.id]));
-            } catch (error) {
-                toast.error('Failed to load assignments');
-            }
-        };
-    
-        fetchAssignments();
-    }, [selectedSegmentId, judges, segments]);
-
-    const handleToggle = (judgeId) => {
-        setAssignments(prev => {
-            const updated = { ...prev, [judgeId]: !prev[judgeId] };
-            setSelectAll(judges.every(judge => updated[judge.id]));
-            return updated;
-        });
-    };
-
-    const handleSelectAll = () => {
-        const newState = !selectAll;
-        setSelectAll(newState);
-        const updatedAssignments = {};
-        judges.forEach(judge => {
-            updatedAssignments[judge.id] = newState;
-        });
-        setAssignments(updatedAssignments);
-    };
-
-    const handleSave = async () => {
-        if (!selectedSegmentId || Object.keys(assignments).length === 0) {
-            toast.error('Please select a segment and make changes first.');
-            return;
-        }
-    
-        setLoading(true);
-        try {
-            const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
-            const endpoint = selectedSegment.type === 'solo' ? '/api/judge-segment' : '/api/pair-judge-segments';
-    
-            const payload = selectedSegment.type === 'solo'
-                ? { segment_id: selectedSegmentId, assignments }
-                : { pair_segment_id: selectedSegmentId, assignments };
-    
-            await axios.post(endpoint, payload);
-            toast.success('Assignments saved successfully');
-        } catch (error) {
-            if (error.response) {
-                console.error('Validation errors:', error.response.data.errors);
-            }
-            toast.error('Failed to save assignments');
-        } finally {
-            setLoading(false);
-            setShowConfirm(false);
-        }
-    };
+    const {
+        judges,
+        segments,
+        selectedSegmentId,
+        assignments,
+        selectAll,
+        loading,
+        setSelectedSegmentId,
+        handleToggle,
+        handleSelectAll,
+        handleSave
+    } = useAssignSegmentBackend();
 
     const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
     const segmentName = selectedSegment 
         ? (selectedSegment.pair_name || selectedSegment.name)
         : 'a Segment';
 
+    const handleConfirmSave = async () => {
+        const success = await handleSave();
+        if (success) {
+            setShowConfirm(false);
+        }
+    };
+
     return (
         <AdminLayout header={<h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Assign Segment to Judges</h2>}>
             <Head title="Assign Segment" />
             <FlexContainer>
-                <div className="hidden lg:block md:hidden bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                    <div className="sticky top-0 z-10">
-                        <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-6">Select a Segment</h3>
-                        <SegmentSelector
-                            segments={segments}
-                            setIsModalOpen={setIsModalOpen}
-                            selectedSegmentId={selectedSegmentId}
-                            onSelectSegment={setSelectedSegmentId}
-                        />
+                {/* Sidebar - Segment Selection */}
+                {!isSmallScreen && (
+                    <div className="hidden lg:block md:hidden bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                        <div className="sticky top-0 z-10">
+                            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-6">Select a Segment</h3>
+                            <SegmentSelector
+                                segments={segments}
+                                selectedSegmentId={selectedSegmentId}
+                                onSelectSegment={setSelectedSegmentId}
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
 
+                {/* Mobile Segment Selection */}
                 {isSmallScreen && (
                     <>
                         <button
                             style={buttonStyle}
                             className="p-3 md:p-4 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition duration-300"
-                            onClick={() => setIsModalOpen((prev) => !prev)}
+                            onClick={() => setIsModalOpen(true)}
                             onMouseDown={onMouseDown}
                             onTouchStart={onTouchStart}
                         >
-                            <BiLogoSlack className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
+                            <BiLogoSlack className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
 
                         {isModalOpen && (
@@ -186,24 +80,17 @@ export default function AssignSegment() {
                                     <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 text-center">Select a Segment</h3>
                                     <SegmentSelector
                                         segments={segments}
-                                        setIsModalOpen={setIsModalOpen}
                                         selectedSegmentId={selectedSegmentId}
                                         onSelectSegment={setSelectedSegmentId}
+                                        onClose={() => setIsModalOpen(false)}
                                     />
-                                    <div className="flex justify-center">
-                                        <button
-                                            className="mt-4 px-4 py-2 bg-red-300 dark:bg-red-600 text-red-800 dark:text-red-200 rounded-lg hover:bg-red-400 dark:hover:bg-red-500 transition duration-300"
-                                            onClick={() => setIsModalOpen(false)}
-                                        >
-                                            Close
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         )}
                     </>
                 )}
 
+                {/* Main Content */}
                 <div className="col-span-3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg relative">
                     {selectedSegment && (
                         <div className="mb-6 p-3 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center">
@@ -214,6 +101,7 @@ export default function AssignSegment() {
                         </div>
                     )}
 
+                    {/* Select All Toggle */}
                     <div className="absolute top-8 right-10">
                         <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-600 dark:text-gray-300 font-semibold">Select All</span>
@@ -223,6 +111,7 @@ export default function AssignSegment() {
                         </div>
                     </div>
 
+                    {/* Empty State */}
                     {judges.length === 0 && !loading && (
                         <div className="col-span-3 text-center py-12">
                             <BiUserX className="mx-auto text-5xl text-gray-400 dark:text-gray-500" />
@@ -235,6 +124,7 @@ export default function AssignSegment() {
                         </div>
                     )}
 
+                    {/* Loading State */}
                     {judges.length === 0 && loading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[...Array(6)].map((_, i) => (
@@ -243,47 +133,25 @@ export default function AssignSegment() {
                         </div>
                     )}
 
+                    {/* Judges Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {judges.map(judge => (
-                            <div 
-                                key={judge.id} 
-                                className={`
-                                    relative bg-white dark:bg-gray-700 rounded-xl shadow-md p-4 
-                                    transition-all duration-300 hover:shadow-lg hover:-translate-y-1
-                                    border-l-4 ${assignments[judge.id] ? 'border-green-500' : 'border-transparent'}
-                                `}
-                            >
-                                {assignments[judge.id] && (
-                                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                                        Assigned
-                                    </div>
-                                )}
-                                <img 
-                                    src={`/storage/${judge.picture}`} 
-                                    alt={judge.name} 
-                                    className="w-24 h-24 rounded-full object-cover mb-4 mx-auto"
-                                />
-                                <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">
-                                    {judge.name}
-                                </h4>
-                                <div className="mt-4 flex justify-center">
-                                    <AnimatedToggle 
-                                        isOn={assignments[judge.id]} 
-                                        onClick={() => handleToggle(judge.id)} 
-                                        color="green"
-                                    />
-                                </div>
-                            </div>
+                            <JudgeCard 
+                                key={judge.id}
+                                judge={judge}
+                                isAssigned={assignments[judge.id]}
+                                onToggle={() => handleToggle(judge.id)}
+                            />
                         ))}
                     </div>
 
+                    {/* Save Button */}
                     {judges.length > 0 && (
                         <div className="flex justify-center mt-8">
                             <button 
                                 onClick={() => setShowConfirm(true)}
                                 disabled={!selectedSegmentId || loading}
-                                className={`
-                                    px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center
+                                className={`px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center
                                     ${selectedSegmentId 
                                         ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-xl'
                                         : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
@@ -306,6 +174,7 @@ export default function AssignSegment() {
                 </div>
             </FlexContainer>
 
+            {/* Confirmation Modal */}
             {showConfirm && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md">
@@ -321,7 +190,7 @@ export default function AssignSegment() {
                                 Cancel
                             </button>
                             <button 
-                                onClick={handleSave}
+                                onClick={handleConfirmSave}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                             >
                                 Confirm
@@ -335,3 +204,32 @@ export default function AssignSegment() {
         </AdminLayout>
     );
 }
+
+// Judge Card Component
+const JudgeCard = ({ judge, isAssigned, onToggle }) => (
+    <div className={`relative bg-white dark:bg-gray-700 rounded-xl shadow-md p-4 
+        transition-all duration-300 hover:shadow-lg hover:-translate-y-1
+        border-l-4 ${isAssigned ? 'border-green-500' : 'border-transparent'}`}
+    >
+        {isAssigned && (
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                Assigned
+            </div>
+        )}
+        <img 
+            src={`/storage/${judge.picture}`} 
+            alt={judge.name} 
+            className="w-24 h-24 rounded-full object-cover mb-4 mx-auto"
+        />
+        <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2 text-center">
+            {judge.name}
+        </h4>
+        <div className="mt-4 flex justify-center">
+            <AnimatedToggle 
+                isOn={isAssigned} 
+                onClick={onToggle} 
+                color="green"
+            />
+        </div>
+    </div>
+);
