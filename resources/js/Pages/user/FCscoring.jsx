@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BsPersonLinesFill } from "react-icons/bs";
+import { BsPersonLinesFill, BsArrowLeft } from "react-icons/bs";
 import useDrag from '@/Components/useDrag';
 import ScoringCandidates from '@/Components/ScoringCandidates';
 import ScoringPanel from '@/Components/ScoringPanel';
@@ -19,7 +19,7 @@ import {
     PairhandleSave,
 } from '@/BackEnd/ScoringBackEnd.jsx';
 
-export default function Scoring() {
+export default function FCScoring() {
     const [candidates, setCandidates] = useState([]);
     const [pairCandidates, setPairCandidates] = useState([]);
     const [pairJudgeSegments, setPairJudgeSegments] = useState([]);
@@ -31,10 +31,9 @@ export default function Scoring() {
     const [isFetching, setIsFetching] = useState(true);
     const [lockedCandidates, setLockedCandidates] = useState([]);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const selectedCandidateStr = String(selectedCandidate);
-  const isPairCandidate = selectedCandidateStr.includes('-');
-  // Determine the selected candidate's gender
-  const selectedGender = isPairCandidate ? selectedCandidateStr.split('-')[1] : null;
+    const selectedCandidateStr = String(selectedCandidate);
+    const isPairCandidate = selectedCandidateStr.includes('-');
+    const selectedGender = isPairCandidate ? selectedCandidateStr.split('-')[1] : null;
 
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
         x: window.innerWidth - 100,
@@ -56,7 +55,7 @@ export default function Scoring() {
                     setCandidates(data.candidates);
                     setPairCandidates(data.pairCandidates);
                     setSegments(data.segments);
-                    setPairJudgeSegments(data.pairJudgeSegments); // Initialize pairJudgeSegments
+                    setPairJudgeSegments(data.pairJudgeSegments);
                 }
             } catch (error) {
                 toast.error(TOAST_MESSAGES.LOADING_ERROR);
@@ -77,7 +76,7 @@ export default function Scoring() {
                 setSelectedCandidate,
                 setScores,
                 segments,
-                pairJudgeSegments // Pass pairJudgeSegments here
+                pairJudgeSegments
             );
         } catch (error) {
             toast.error(TOAST_MESSAGES.LOADING_ERROR);
@@ -108,14 +107,11 @@ export default function Scoring() {
                 return;
             }
 
-            // Ensure selectedCandidate is a string
             const selectedCandidateStr = String(selectedCandidate);
 
             if (selectedCandidateStr.includes('-')) {
-                // Pair candidate
                 await PairhandleSave(selectedCandidateStr, scores, pairJudgeSegments, setLoading);
             } else {
-                // Individual candidate
                 await handleSave(selectedCandidateStr, scores, segments, setLoading);
             }
         } catch (error) {
@@ -133,6 +129,17 @@ export default function Scoring() {
         <>
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 md:p-8">
                 <Head title="Scoring" />
+                
+                {/* Back to Dashboard Button */}
+                <div className="mb-4 md:mb-6">
+                    <Link 
+                        href="/LeaderBoard" 
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-md hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+                    >
+                        <BsArrowLeft className="mr-2" />
+                       View Leaderboard
+                    </Link>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
                     {/* Candidate Panel */}
@@ -194,22 +201,22 @@ export default function Scoring() {
                     )}
                     {/* Scoring Panel */}
                     <ScoringPanel
-  selectedCandidate={selectedCandidateStr}
-  candidates={candidates}
-  pairCandidates={pairCandidates}
-  segments={segments}
-  pairJudgeSegments={pairJudgeSegments}
-  scores={scores}
-  handleScoreChange={handleScoreInputChange}
-  calculateTotalScore={calculateTotalScore}
-  calculateProgress={calculateProgress}
-  loading={loading}
-  lockedCandidates={lockedCandidates}
-  handleSave={handleSaveScores}
-  toggleLock={handleToggleLock}
-  isPairCandidate={isPairCandidate} // Pass isPairCandidate here
-  selectedGender={selectedGender}    // Pass selectedGender here
-/>
+                        selectedCandidate={selectedCandidateStr}
+                        candidates={candidates}
+                        pairCandidates={pairCandidates}
+                        segments={segments}
+                        pairJudgeSegments={pairJudgeSegments}
+                        scores={scores}
+                        handleScoreChange={handleScoreInputChange}
+                        calculateTotalScore={calculateTotalScore}
+                        calculateProgress={calculateProgress}
+                        loading={loading}
+                        lockedCandidates={lockedCandidates}
+                        handleSave={handleSaveScores}
+                        toggleLock={handleToggleLock}
+                        isPairCandidate={isPairCandidate}
+                        selectedGender={selectedGender}
+                    />
                 </div>
             </div>
             <ToastContainer />

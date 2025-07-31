@@ -37,7 +37,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             { name: "LeaderBoard", routeName: "UserLeaderboard" },
                             { name: "Candidate List", routeName: "candidate" },
                             { name: "Segment List", routeName: "segment" },
-                            { name: "Scoring", routeName: "scoring" },
+                            { name: "Scoring", routeName: "FCscoring" },
                         ].map(({ name, routeName }) => (
                             <li key={routeName}>
                                 <NavLink
