@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import IndividualScoreInput from '@/Components/IndividualScoreInput';
+import SoloScoreInput from '@/Components/SoloScoreInput';
 import PairScoreInput from '@/Components/PairScoreInput';
 
 const ScoringPanel = ({
@@ -75,22 +75,36 @@ const ScoringPanel = ({
     // Check if the selected candidate is locked
     const isLocked = useMemo(() => lockedCandidates.includes(selectedCandidateStr), [lockedCandidates, selectedCandidateStr]);
 
+
+    
     // Handle score input changes with validation
-    const handleScoreInputChange = (segmentId, criterionId, value) => {
-        const numericValue = parseFloat(value);
-        
-        if (isNaN(numericValue)) {
-            toast.error('Please enter a valid number');
-            return;
-        }
-        
-        if (numericValue < 0 || numericValue > 10) {
-            toast.error('Scores must be between 0 and 10');
-            return;
-        }
-        
+const handleScoreInputChange = (segmentId, criterionId, value) => {
+    // Allow empty string (when backspacing to clear)
+    if (value === '') {
+        handleScoreChange(segmentId, criterionId, '0'); // Set to 0 when cleared
+        return;
+    }
+    
+    // Allow single character input (like '1' or '0') without requiring full number
+    if (/^[0-9]$/.test(value)) {
         handleScoreChange(segmentId, criterionId, value);
-    };
+        return;
+    }
+    
+    const numericValue = parseFloat(value);
+    
+    if (isNaN(numericValue)) {
+        toast.error('Please enter a valid number between 1-10');
+        return;
+    }
+    
+    if (numericValue < 0 || numericValue > 10) {
+        toast.error('Scores must be between 1 and 10');
+        return;
+    }
+    
+    handleScoreChange(segmentId, criterionId, value);
+};
 
     const totalScore = calculateTotalScore(
         scores,
@@ -163,7 +177,7 @@ const ScoringPanel = ({
                                                         gender={selectedGender}
                                                     />
                                                 ) : (
-                                                    <IndividualScoreInput
+                                                    <SoloScoreInput
                                                         key={criterion.id}
                                                         segmentId={segment.id}
                                                         criterion={criterion}
