@@ -81,7 +81,7 @@ Route::get('/api/assignments/{judgeId}', [JudgeCandidateController::class, 'show
 
 Route::post('/segments/store', [SegmentController::class, 'store']);
 Route::get('/api/segments', [SegmentController::class, 'index']); 
-Route::delete('/segments/{id}', [SegmentController::class, 'destroy']);
+Route::delete('/api/segments/{id}', [SegmentController::class, 'destroy']);
 
 
 Route::get('/api/candidates/assigned', [CandidateController::class, 'getAssignedCandidates'])->middleware('auth');

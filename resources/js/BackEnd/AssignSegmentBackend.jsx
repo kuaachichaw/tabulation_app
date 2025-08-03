@@ -123,7 +123,6 @@ export const useAssignSegmentBackend = () => {
             setLoading(false);
         }
     };
-
     return {
         // State
         judges,
