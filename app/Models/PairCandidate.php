@@ -37,4 +37,9 @@ class PairCandidate extends Model
     {
         return $this->female_picture ? asset('storage/' . $this->female_picture) : null;
     }
+
+    public function pairscores()
+{
+    return $this->hasMany(PairScore::class, 'pair_id');
+}
 }

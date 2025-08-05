@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Head } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
@@ -6,6 +6,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ExportCSVModal from '@/Modal/ExportCSVModal';
 import OverallLeaderboardModal from '@/Modal/OverallLeaderboardModal';
+import PairOverallLeaderboardModal from '@/Modal/PairOverallLeaderboardModal';
 import FlexContainer from '@/Components/FlexContainer';
 import useDrag from '@/Components/useDrag';
 import { BiLogoSlack, BiSolidUser, BiDownload, BiCog } from "react-icons/bi";
@@ -15,10 +16,13 @@ import { HiUsers } from 'react-icons/hi';
 import { FaFemale, FaMale, FaFilter } from "react-icons/fa";
 import { SoloLeaderBoard } from '@/Components/SoloLeaderBoard';
 import { PairLeaderBoard } from '@/Components/PairLeaderBoard';
+import axios from 'axios';
 
 export default function Leaderboard() {
     const [displayMode, setDisplayMode] = useState('solo');
     const [genderFilter, setGenderFilter] = useState(null);
+    const [overallRankings, setOverallRankings] = useState(null);
+    const [loadingRankings, setLoadingRankings] = useState(false);
 
     const {
         segments,
@@ -35,6 +39,7 @@ export default function Leaderboard() {
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isOverallSetupOpen, setIsOverallSetupOpen] = useState(false);
+    const [isPairOverallSetupOpen, setIsPairOverallSetupOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
     const { buttonStyle, onMouseDown, onTouchStart, isSmallScreen } = useDrag({
@@ -45,10 +50,43 @@ export default function Leaderboard() {
     const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
     const selectedPairSegment = pairSegments.find(segment => segment.id === selectedSegmentId);
 
+    // Fetch overall rankings when in pair overall mode
+    useEffect(() => {
+        if (displayMode === 'pair' && isOverall) {
+            fetchOverallRankings();
+        }
+    }, [displayMode, isOverall]);
+
+    const fetchOverallRankings = async () => {
+        setLoadingRankings(true);
+        try {
+            const response = await axios.get(route('pair.overall.rankings'));
+            setOverallRankings(response.data);
+        } catch (error) {
+            console.error('Error fetching overall rankings:', error);
+        } finally {
+            setLoadingRankings(false);
+        }
+    };
+
     const handleModeChange = (mode) => {
         setDisplayMode(mode);
         setGenderFilter(null);
         setSelectedSegmentId(null);
+        setOverallRankings(null);
+    };
+
+    const handleOverallSetupClick = () => {
+        if (displayMode === 'pair') {
+            setIsPairOverallSetupOpen(true);
+        } else {
+            setIsOverallSetupOpen(true);
+        }
+    };
+
+    const handlePairOverallSave = () => {
+        setIsPairOverallSetupOpen(false);
+        fetchOverallRankings(); // Refresh rankings after saving weights
     };
 
     return (
@@ -61,7 +99,6 @@ export default function Leaderboard() {
         >
             <Head title="Leaderboard" />
             
-            {/* Main Container */}
             <div className="space-y-6">
                 {/* Display Mode Toggle */}
                 <div className="w-full">
@@ -91,7 +128,6 @@ export default function Leaderboard() {
                     </div>
                 </div>
 
-                {/* Gender Filter (only shown in pair mode) */}
                 {displayMode === 'pair' && (
                     <div className="w-full">
                         <div className="flex flex-col items-center">
@@ -117,12 +153,6 @@ export default function Leaderboard() {
                                     <FaMale className="w-4 h-4" /> Male
                                 </button>
                             </div>
-                            {!selectedSegmentId && pairSegments.length > 0 && (
-                                <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
-                                    <FaFilter className="w-3 h-3" /> 
-                                    Please select Male or Female Candidate and Choose a Segment
-                                </p>
-                            )}
                         </div>
                     </div>
                 )}
@@ -201,7 +231,6 @@ export default function Leaderboard() {
 
                     {/* Main Content - Leaderboard Display */}
                     <div className="col-span-3 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 relative">
-                        {/* Header with title and actions */}
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                             <div>
                                 <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -230,7 +259,7 @@ export default function Leaderboard() {
                             <div className="flex gap-2">
                                 {isOverall && (
                                     <button
-                                        onClick={() => setIsOverallSetupOpen(true)}
+                                        onClick={handleOverallSetupClick}
                                         className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-lg text-sm flex items-center gap-1.5 transition-colors"
                                     >
                                         <BiCog className="w-4 h-4" />
@@ -248,8 +277,7 @@ export default function Leaderboard() {
                             </div>
                         </div>
 
-                        {/* Loading & Error Handling */}
-                        {loading ? (
+                        {loading || loadingRankings ? (
                             <div className="flex justify-center items-center h-64">
                                 <div className="animate-spin h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
                             </div>
@@ -264,7 +292,22 @@ export default function Leaderboard() {
                                 </button>
                             </div>
                         ) : displayMode === 'pair' ? (
-                            !selectedSegmentId ? (
+                            isOverall ? (
+                                // Overall Pair Leaderboard View
+                                genderFilter ? (
+                                    <PairLeaderBoard 
+                                        leaderboard={overallRankings}
+                                        isOverall={true}
+                                        genderFilter={genderFilter}
+                                    />
+                                ) : (
+                                    <div className="text-center py-8 space-y-2">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Please select Male or Female to view overall rankings
+                                        </p>
+                                    </div>
+                                )
+                            ) : !selectedSegmentId ? (
                                 <div className="text-center py-8 space-y-2">
                                     <p className="text-gray-500 dark:text-gray-400">
                                         Please select a segment to view pair leaderboard
@@ -273,7 +316,7 @@ export default function Leaderboard() {
                             ) : genderFilter ? (
                                 <PairLeaderBoard 
                                     leaderboard={leaderboard}
-                                    isOverall={isOverall}
+                                    isOverall={false}
                                     segmentName={selectedPairSegment?.pair_name}
                                     genderFilter={genderFilter}
                                 />
@@ -306,7 +349,7 @@ export default function Leaderboard() {
             <ExportCSVModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
-                leaderboard={leaderboard}
+                leaderboard={isOverall && displayMode === 'pair' ? overallRankings?.data?.rankings : leaderboard}
                 segments={displayMode === 'pair' ? pairSegments : segments}
                 selectedSegmentId={selectedSegmentId}
                 isOverall={isOverall}
@@ -315,11 +358,20 @@ export default function Leaderboard() {
                 genderFilter={genderFilter}
             />
             
-            <OverallLeaderboardModal
-                isOpen={isOverallSetupOpen}
-                closeModal={() => setIsOverallSetupOpen(false)}
-                segments={displayMode === 'pair' ? pairSegments : segments}
-            />
+            {displayMode === 'pair' ? (
+                <PairOverallLeaderboardModal
+                    isOpen={isPairOverallSetupOpen}
+                    closeModal={() => setIsPairOverallSetupOpen(false)}
+                    pairSegments={pairSegments}
+                    onSave={handlePairOverallSave}
+                />
+            ) : (
+                <OverallLeaderboardModal
+                    isOpen={isOverallSetupOpen}
+                    closeModal={() => setIsOverallSetupOpen(false)}
+                    segments={segments}
+                />
+            )}
 
             <ToastContainer position="bottom-right" autoClose={3000} />
         </AdminLayout>

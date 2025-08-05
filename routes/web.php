@@ -20,6 +20,18 @@ use App\Http\Controllers\PairJudgeSegmentController;
 use App\Http\Controllers\PairScoreController;
 use App\Http\Controllers\PairLeaderboardController;
 use App\Http\Controllers\DisplayOptionController;
+use App\Http\Controllers\PairOverallLeaderboardController;
+
+Route::prefix('pair-overall')->group(function () {
+    Route::get('/', [PairOverallLeaderboardController::class, 'index'])
+         ->name('pair.overall.index');
+    
+    Route::post('/save', [PairOverallLeaderboardController::class, 'store'])
+         ->name('pair.overall.store');
+         
+    Route::get('/rankings', [PairOverallLeaderboardController::class, 'getRankings'])
+         ->name('pair.overall.rankings');
+});
 
 Route::post('/display/save', [DisplayOptionController::class, 'save'])->name('display.save');
 Route::get('/display/get', [DisplayOptionController::class, 'get'])->name('display.get');
