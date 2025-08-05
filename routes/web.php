@@ -18,28 +18,23 @@ use App\Http\Controllers\JudgePairCandidateController;
 use App\Http\Controllers\PairSegmentController;
 use App\Http\Controllers\PairJudgeSegmentController;
 use App\Http\Controllers\PairScoreController;
-use App\Http\Controllers\PairLeaderboardController;
 use App\Http\Controllers\DisplayOptionController;
-use App\Http\Controllers\PairOverallLeaderboardController;
+use App\Http\Controllers\PairLeaderboardController;
 
-Route::prefix('pair-overall')->group(function () {
-    Route::get('/', [PairOverallLeaderboardController::class, 'index'])
-         ->name('pair.overall.index');
-    
-    Route::post('/save', [PairOverallLeaderboardController::class, 'store'])
-         ->name('pair.overall.store');
-         
-    Route::get('/rankings', [PairOverallLeaderboardController::class, 'getRankings'])
-         ->name('pair.overall.rankings');
+Route::prefix('PairLeaderboard')->name('pairs.leaderboard.')->group(function () {
+    Route::get('/index', [PairLeaderboardController::class, 'index'])->name('index');
+    Route::post('/store', [PairLeaderboardController::class, 'store'])->name('store');
+    Route::get('segment/{segmentId}/{gender}', [PairLeaderboardController::class, 'getSegmentLeaderboard'])
+        ->where('gender', 'male|female')
+        ->name('segment');
+    Route::get('PairOverAll/{gender}', [PairLeaderboardController::class, 'getPairOverallLeaderboard'])
+        ->where('gender', 'male|female')
+        ->name('PairOverAll');
 });
+
 
 Route::post('/display/save', [DisplayOptionController::class, 'save'])->name('display.save');
 Route::get('/display/get', [DisplayOptionController::class, 'get'])->name('display.get');
-
-Route::prefix('api/leaderboard/pairs')->group(function () {
-    Route::get('segment/{segmentId}/{gender}', [PairLeaderboardController::class, 'getSegmentLeaderboard']);
-    Route::get('overall/{gender}', [PairLeaderboardController::class, 'getOverallLeaderboard']);
-});
 
 Route::post('/api/pair-scores', [PairScoreController::class, 'store'])->middleware('auth');
 Route::get('/api/pair-scores/{pairId}', [PairScoreController::class, 'show'])->middleware('auth');

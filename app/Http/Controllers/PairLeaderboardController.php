@@ -2,14 +2,90 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PairCandidate;
-use App\Models\PairScore;
+use Illuminate\Http\Request;
+use App\Models\PairOverallLeaderboard;
 use App\Models\PairSegment;
+use App\Models\PairCandidate; // Add this import
+use App\Models\PairScore; // Add this if you use it directly
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PairLeaderboardController extends Controller
 {
+
+    public function index()
+    {
+        try {
+            $pairSegments = PairSegment::select('id', 'pair_name', 'male_name', 'female_name')->get();
+            
+            $weights = PairOverallLeaderboard::get()
+                ->groupBy('gender')
+                ->mapWithKeys(function ($items, $gender) {
+                    return [$gender => $items->pluck('weight', 'pair_segment_id')];
+                });
+
+            return response()->json([
+                'pairSegments' => $pairSegments,
+                'maleWeights' => $weights['male'] ?? [],
+                'femaleWeights' => $weights['female'] ?? []
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load pair overall leaderboard data',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+  public function store(Request $request)
+{
+    $validated = $request->validate([
+        'male_segments' => 'required|array',
+        'male_segments.*.pair_segment_id' => 'required|exists:pair_segment_table,id',
+        'male_segments.*.weight' => 'required|numeric|min:0|max:100',
+        'female_segments' => 'required|array',
+        'female_segments.*.pair_segment_id' => 'required|exists:pair_segment_table,id',
+        'female_segments.*.weight' => 'required|numeric|min:0|max:100',
+    ]);
+
+    try {
+        \DB::transaction(function () use ($validated) {
+            // Process weights for both genders
+            foreach (['male', 'female'] as $gender) {
+                foreach ($validated["{$gender}_segments"] as $segment) {
+                    PairOverallLeaderboard::updateOrCreate(
+                        [
+                            'pair_segment_id' => $segment['pair_segment_id'],
+                            'gender' => $gender
+                        ],
+                        [
+                            'weight' => $segment['weight']
+                        ]
+                    );
+                }
+            }
+
+            // Clean up segments not included in either gender
+            $usedSegmentIds = collect($validated['male_segments'])
+                ->merge($validated['female_segments'])
+                ->pluck('pair_segment_id')
+                ->unique();
+
+            PairOverallLeaderboard::whereNotIn('pair_segment_id', $usedSegmentIds)->delete();
+        });
+
+        return response()->json([
+            'message' => 'Pair overall weights saved successfully!',
+            'total_male_weight' => array_sum(array_column($validated['male_segments'], 'weight')),
+            'total_female_weight' => array_sum(array_column($validated['female_segments'], 'weight'))
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to save configuration',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
     public function getSegmentLeaderboard($segmentId, $gender)
 {
     try {
@@ -86,60 +162,115 @@ class PairLeaderboardController extends Controller
         return response()->json(['error' => 'Failed to load pair leaderboard data'], 500);
     }
 }
-    public function getOverallLeaderboard($gender)
-    {
-        try {
-            // Validate gender input
-            if (!in_array($gender, ['male', 'female'])) {
-                return response()->json(['error' => 'Invalid gender specified'], 400);
+
+
+  public function getPairOverallLeaderboard($gender)
+{
+    try {
+        if (!in_array($gender, ['male', 'female'])) {
+            return response()->json(['error' => 'Invalid gender specified'], 400);
+        }
+
+        $weightedSegments = PairOverallLeaderboard::with('segment')
+            ->where('gender', $gender)
+            ->get();
+
+        if ($weightedSegments->isEmpty()) {
+            return response()->json([
+                'error' => 'No segments configured for this gender',
+                'message' => 'Please set up segment weights first'
+            ], 400);
+        }
+
+        $pairs = PairCandidate::all();
+        $totalWeight = $weightedSegments->sum('weight');
+
+        $leaderboard = $pairs->map(function ($pair) use ($weightedSegments, $gender, $totalWeight) {
+            $totalWeightedScore = 0;
+            $segmentBreakdown = [];
+
+            foreach ($weightedSegments as $weightedSegment) {
+                $avgScore = PairScore::where('pair_id', $pair->id)
+                    ->where('pair_segment_id', $weightedSegment->pair_segment_id)
+                    ->where('gender', $gender)
+                    ->avg('score');
+
+                $normalizedScore = $this->normalizeScore($avgScore);
+                $weightedContribution = $normalizedScore * ($weightedSegment->weight / 100);
+                $totalWeightedScore += $weightedContribution;
+
+                $segmentBreakdown[] = [
+                    'segment_id' => $weightedSegment->pair_segment_id,
+                    'segment_name' => $gender === 'male' 
+                        ? $weightedSegment->segment->male_name 
+                        : $weightedSegment->segment->female_name,
+                    'raw_score' => $avgScore ? number_format($avgScore, 2) : 'N/A',
+                    'normalized_score' => $avgScore ? number_format($normalizedScore, 2) . '%' : 'N/A',
+                    'segment_weight' => $weightedSegment->weight . '%',
+                    'weighted_contribution' => $avgScore ? number_format($weightedContribution, 2) . '%' : 'N/A'
+                ];
             }
 
-            $segments = PairSegment::all();
-            $pairs = PairCandidate::all();
+            return [
+                'id' => $pair->id,
+                'pair_name' => $pair->pair_name,
+                'name' => $pair->{$gender . '_name'},
+                'picture' => $pair->{$gender . '_picture'},
+                'total_score_value' => $totalWeightedScore, // Raw value for sorting
+                'total_score' => number_format($totalWeightedScore, 2) . '%',
+                'total_weight' => $totalWeight . '%',
+                'segments' => $segmentBreakdown
+            ];
+        });
 
-            $leaderboard = $pairs->map(function ($pair) use ($segments, $gender) {
-                $totalScore = 0;
-                $segmentBreakdown = [];
+        // Apply ranking before returning
+        $rankedLeaderboard = $this->applyRanking($leaderboard);
 
-                foreach ($segments as $segment) {
-                    $avgScore = PairScore::where('pair_id', $pair->id)
-                        ->where('pair_segment_id', $segment->id)
-                        ->where('gender', $gender)
-                        ->avg('score');
+        return response()->json([
+            'gender' => $gender,
+            'total_weight' => $totalWeight . '%',
+            'leaderboard' => $rankedLeaderboard
+        ]);
 
-                    $segmentBreakdown[] = [
-                        'segment_id' => $segment->id,
-                        'segment_name' => $gender === 'male' 
-                            ? $segment->male_name 
-                            : $segment->female_name,
-                        'segment_score' => number_format($avgScore, 2) . '%'
-                    ];
-                    $totalScore += $avgScore;
-                }
-
-                return [
-                    'id' => $pair->id,
-                    'name' => $pair->{$gender . '_name'},
-                    'picture' => $pair->{$gender . '_picture'},
-                    'total_score' => number_format($totalScore / max(count($segments), 1), 2) . '%',
-                    'segments' => $segmentBreakdown
-                ];
-            })->sortByDesc(function ($pair) {
-                return (float) str_replace('%', '', $pair['total_score']);
-            })->values();
-
-            return response()->json([
-                'gender' => $gender,
-                'leaderboard' => $leaderboard
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("Error fetching overall $gender pair leaderboard:", [
-                'error' => $e->getMessage()
-            ]);
-            return response()->json([
-                'error' => 'Failed to load overall pair leaderboard data'
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error("Error in $gender leaderboard: " . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to load leaderboard',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
+private function applyRanking($candidates)
+{
+    // Sort by total_score_value descending
+    $sorted = $candidates->sortByDesc('total_score_value')->values();
+    
+    // Assign ranks (handling ties)
+    $rank = 1;
+    $previousScore = null;
+    
+    return $sorted->map(function ($candidate, $index) use (&$rank, &$previousScore) {
+        // If same score as previous, same rank
+        if ($previousScore !== null && $candidate['total_score_value'] == $previousScore) {
+            $candidate['rank'] = $rank;
+        } else {
+            $rank = $index + 1;
+            $candidate['rank'] = $rank;
+        }
+        
+        $previousScore = $candidate['total_score_value'];
+        
+        // Remove temporary sorting field
+        unset($candidate['total_score_value']);
+        
+        return $candidate;
+    });
+}
+
+private function normalizeScore($score)
+{
+    if (is_null($score)) return 0;
+    return ($score <= 10 && fmod($score, 1) != 0) ? $score * 10 : min($score, 100);
+}
 }

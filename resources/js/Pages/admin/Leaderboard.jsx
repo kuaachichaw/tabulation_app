@@ -18,7 +18,7 @@ import { SoloLeaderBoard } from '@/Components/SoloLeaderBoard';
 import { PairLeaderBoard } from '@/Components/PairLeaderBoard';
 import axios from 'axios';
 
-export default function Leaderboard() {
+export default function ALeaderboard() {
     const [displayMode, setDisplayMode] = useState('solo');
     const [genderFilter, setGenderFilter] = useState(null);
     const [overallRankings, setOverallRankings] = useState(null);
@@ -60,7 +60,7 @@ export default function Leaderboard() {
     const fetchOverallRankings = async () => {
         setLoadingRankings(true);
         try {
-            const response = await axios.get(route('pair.overall.rankings'));
+            const response = await axios.get('/PairLeaderboard/index');
             setOverallRankings(response.data);
         } catch (error) {
             console.error('Error fetching overall rankings:', error);
@@ -127,7 +127,7 @@ export default function Leaderboard() {
                         </div>
                     </div>
                 </div>
-
+                                
                 {displayMode === 'pair' && (
                     <div className="w-full">
                         <div className="flex flex-col items-center">
@@ -296,7 +296,6 @@ export default function Leaderboard() {
                                 // Overall Pair Leaderboard View
                                 genderFilter ? (
                                     <PairLeaderBoard 
-                                        leaderboard={overallRankings}
                                         isOverall={true}
                                         genderFilter={genderFilter}
                                     />
@@ -315,9 +314,8 @@ export default function Leaderboard() {
                                 </div>
                             ) : genderFilter ? (
                                 <PairLeaderBoard 
-                                    leaderboard={leaderboard}
                                     isOverall={false}
-                                    segmentName={selectedPairSegment?.pair_name}
+                                    segmentId={selectedSegmentId}
                                     genderFilter={genderFilter}
                                 />
                             ) : (

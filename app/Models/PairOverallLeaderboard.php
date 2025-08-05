@@ -33,4 +33,9 @@ class PairOverallLeaderboard extends Model {
     public function scopeFemale($query) {
         return $query->where('gender', 'female');
     }
+
+     public function segment()
+    {
+        return $this->belongsTo(PairSegment::class, 'pair_segment_id');
+    }
 }

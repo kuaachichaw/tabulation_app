@@ -77,14 +77,14 @@ export const useLeaderboardBackend = (displayMode = 'solo') => {
                 const [maleData, femaleData] = await Promise.all([
                     fetchData(
                         isOverall 
-                            ? '/api/leaderboard/pairs/overall/male' 
-                            : `/api/leaderboard/pairs/segment/${selectedSegmentId}/male`,
+                            ? '/PairLeaderboard/PairOverAll/male' 
+                            : `/PairLeaderboard/segment/${selectedSegmentId}/male`,
                         showError ? 'Failed to load male pairs' : ''
                     ),
                     fetchData(
                         isOverall 
-                            ? '/api/leaderboard/pairs/overall/female' 
-                            : `/api/leaderboard/pairs/segment/${selectedSegmentId}/female`,
+                            ? '/PairLeaderboard/PairOverAll/female' 
+                            : `/PairLeaderboard/segment/${selectedSegmentId}/female`,
                         showError ? 'Failed to load female pairs' : ''
                     )
                 ]);

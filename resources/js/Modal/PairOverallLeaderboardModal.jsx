@@ -27,7 +27,7 @@ const PairOverallLeaderboardModal = ({ isOpen, closeModal, pairSegments = [] }) 
             setIsLoading(true);
             setError(null);
             try {
-                const response = await axios.get(route('pair.overall.index'));
+                const response = await axios.get('/PairLeaderboard/index');
                 const { maleWeights = {}, femaleWeights = {} } = response.data;
                 
                 setWeights({
@@ -106,7 +106,7 @@ const PairOverallLeaderboardModal = ({ isOpen, closeModal, pairSegments = [] }) 
 
         setIsLoading(true);
         try {
-            await axios.post(route('pair.overall.store'), payload);
+            await axios.post('/PairLeaderboard/store', payload);
             toast.success('Configuration saved successfully!');
             setTimeout(closeModal, 1000);
         } catch (error) {
@@ -134,7 +134,17 @@ const PairOverallLeaderboardModal = ({ isOpen, closeModal, pairSegments = [] }) 
                 
                 <div className="flex justify-center mb-6">
                     <div className="inline-flex rounded-md shadow-sm">
-                       
+                        <button
+                            type="button"
+                            onClick={() => setGender('male')}
+                            className={`px-4 py-2 text-sm font-medium rounded-l-md border transition-colors ${
+                                gender === 'male' 
+                                    ? 'bg-blue-600 text-white border-blue-600' 
+                                    : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
+                            }`}
+                        >
+                            Male
+                        </button>
                         <button
                             type="button"
                             onClick={() => setGender('female')}
@@ -145,17 +155,6 @@ const PairOverallLeaderboardModal = ({ isOpen, closeModal, pairSegments = [] }) 
                             }`}
                         >
                             Female
-                        </button>
-                         <button
-                            type="button"
-                            onClick={() => setGender('male')}
-                            className={`px-4 py-2 text-sm font-medium rounded-l-md border transition-colors ${
-                                gender === 'male' 
-                                    ? 'bg-blue-600 text-white border-blue-600' 
-                                    : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
-                            }`}
-                        >
-                            Male
                         </button>
                     </div>
                 </div>
