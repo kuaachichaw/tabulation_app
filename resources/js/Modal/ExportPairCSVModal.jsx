@@ -32,9 +32,10 @@ export default function ExportPairCSVModal({
       return;
     }
 
+    // Updated title with gender information
     const segmentName = isOverall
       ? `Overall Pair Leaderboard - ${genderFilter ? genderFilter.charAt(0).toUpperCase() + genderFilter.slice(1) : ''}`
-      : pairSegments.find((s) => s.id === selectedSegmentId)?.pair_name || "Pair Segment";
+      : `${pairSegments.find((s) => s.id === selectedSegmentId)?.pair_name || "Pair Segment"} - ${genderFilter ? genderFilter.charAt(0).toUpperCase() + genderFilter.slice(1) : ''}`;
 
     const wb = XLSX.utils.book_new();
 
@@ -67,22 +68,23 @@ export default function ExportPairCSVModal({
   const createPairWorksheet = (data, title, isOverall, judges, gender) => {
     let headers, worksheetData;
 
+    // Ensure gender is included in the title
+    const worksheetTitle = title.includes(gender) 
+      ? title 
+      : `${title} - ${gender.charAt(0).toUpperCase() + gender.slice(1)}`;
+
     if (isOverall) {
       // Get segment weights from the first candidate's data
       const weightedSegments = data[0]?.segments || [];
       
-      // Prepare headers with segment names and weights
-      const segmentHeaders = weightedSegments.map(segment => {
-        // Ensure weight is properly formatted
-        const weight = segment.weight !== undefined ? segment.weight : 0;
-        return `${segment.segment_name}(${weight}%)`;
-      });
+      // Prepare headers with just segment names (no weights)
+      const segmentHeaders = weightedSegments.map(segment => segment.segment_name);
 
       headers = ["Rank", "Pair Name", "Candidate Name", ...segmentHeaders, "Total Score"];
       
       worksheetData = [
         // Title row (merged)
-        [{ v: title, s: { font: { bold: true, sz: 16 } } }, ...new Array(headers.length - 1).fill("")],
+        [{ v: worksheetTitle, s: { font: { bold: true, sz: 16 } } }, ...new Array(headers.length - 1).fill("")],
         
         // Empty row
         new Array(headers.length).fill(""),
@@ -97,16 +99,15 @@ export default function ExportPairCSVModal({
           }
         })),
         
-        // Data rows
-        ...data.map(candidate => [
-          candidate.rank || "",
+        // Data rows with proper ranking
+        ...data.map((candidate, index) => [
+          candidate.rank || index + 1, // Fixed rank display
           candidate.pair_name || "",
           candidate.name || "Unknown Candidate",
           ...weightedSegments.map(segment => {
             const segmentScore = candidate.segments?.find(s => 
               s.segment_id === segment.segment_id
             );
-            // Format score with single percentage sign
             const score = segmentScore ? 
               `${parseFloat(segmentScore.normalized_score).toFixed(2)}%` : "N/A";
             return score;
@@ -118,20 +119,19 @@ export default function ExportPairCSVModal({
         // Empty row
         new Array(headers.length).fill(""),
         
-        // Judges row - starting from column B (index 1)
+        // Judges row
         ["", ...judges.map(judge => ({
           v: judge.name,
           s: { font: { italic: true } }
         })), ...new Array(headers.length - judges.length - 1).fill("")],
         
-        // Judge labels - starting from column B (index 1)
+        // Judge labels
         ["", ...judges.map(() => "Judge"), ...new Array(headers.length - judges.length - 1).fill("")]
       ];
     } else {
       // Segment-specific export
       const selectedSegment = pairSegments.find(s => s.id === selectedSegmentId);
-      const weight = selectedSegment?.weight !== undefined ? selectedSegment.weight : 0;
-      const segmentTitle = `${selectedSegment?.pair_name || ''} (${weight}%)`;
+      const segmentTitle = `${selectedSegment?.pair_name || ''} - ${gender.charAt(0).toUpperCase() + gender.slice(1)}`;
       
       headers = ["Rank", "Pair Name", "Candidate Name", ...judges.map(j => j.name), "Total Score"];
       
@@ -152,14 +152,13 @@ export default function ExportPairCSVModal({
           }
         })),
         
-        // Data rows
-        ...data.map(candidate => [
-          candidate.rank || "",
+        // Data rows with proper ranking
+        ...data.map((candidate, index) => [
+          candidate.rank || index + 1, // Fixed rank display
           candidate.pair_name || "",
           candidate.name || "Unknown Candidate",
           ...judges.map(judge => {
             const score = candidate.judge_scores?.find(s => s.judge === judge.name);
-            // Format score with single percentage sign
             const formattedScore = score ? 
               `${parseFloat(score.judge_total).toFixed(2)}%` : "N/A";
             return formattedScore;
@@ -171,13 +170,13 @@ export default function ExportPairCSVModal({
         // Empty row
         new Array(headers.length).fill(""),
         
-        // Judges row - starting from column B (index 1)
+        // Judges row
         ["", ...judges.map(judge => ({
           v: judge.name,
           s: { font: { italic: true } }
         })), ...new Array(headers.length - judges.length - 1).fill("")],
         
-        // Judge labels - starting from column B (index 1)
+        // Judge labels
         ["", ...judges.map(() => "Judge"), ...new Array(headers.length - judges.length - 1).fill("")]
       ];
     }

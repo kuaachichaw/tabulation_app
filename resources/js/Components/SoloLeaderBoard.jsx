@@ -24,22 +24,22 @@ export const SoloLeaderBoard = ({ leaderboard = [], isOverall }) => {
     );
 
     // Helper component for overall scores
-    const OverallScoreDisplay = ({ segments, totalScore }) => (
-      <div className="flex flex-col items-center flex-1 mx-4">
-        {segments?.length > 0 && (
-          <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
-            {segments.map((segment, index) => (
-              <p key={index}>
-                <strong>{segment.segment_name}:</strong> {segment.weighted_contribution}%
-              </p>
-            ))}
-          </div>
-        )}
-        <p className="font-bold text-lg text-gray-900 dark:text-white">
-          {parseFloat(totalScore?.replace('%', '') || 0).toFixed(2)}%
-        </p>
+  const OverallScoreDisplay = ({ segments, totalScore }) => (
+  <div className="flex flex-col items-center flex-1 mx-4">
+    {segments?.length > 0 && (
+      <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
+        {segments.map((segment, index) => (
+          <p key={index}>
+            <strong>{segment.segment_name}({segment.weight}%):</strong> {segment.weighted_contribution}%
+          </p>
+        ))}
       </div>
-    );
+    )}
+    <p className="font-bold text-lg text-gray-900 dark:text-white">
+      {parseFloat(totalScore?.replace('%', '') || 0).toFixed(2)}%
+    </p>
+  </div>
+);
 
     return (
       <div className="flex flex-col md:flex-row justify-center items-end gap-6 mt-12">
@@ -106,15 +106,15 @@ export const SoloLeaderBoard = ({ leaderboard = [], isOverall }) => {
     );
   
     // Updated OverallScoreDisplay to be centered
-    const OverallScoreDisplay = ({ segments }) => (
-      <div className="flex-1 px-4 text-center">
-        {segments?.map((segment, index) => (
-          <p key={index} className="text-sm text-gray-600 dark:text-gray-400">
-            <strong>{segment.segment_name}:</strong> {segment.weighted_contribution}%
-          </p>
-        ))}
-      </div>
-    );
+   const OverallScoreDisplay = ({ segments }) => (
+  <div className="flex-1 px-4 text-center">
+    {segments?.map((segment, index) => (
+      <p key={index} className="text-sm text-gray-600 dark:text-gray-400">
+        <strong>{segment.segment_name}({segment.weight}%):</strong> {segment.weighted_contribution}%
+      </p>
+    ))}
+  </div>
+);
   
     return (
       <div className="mt-6">

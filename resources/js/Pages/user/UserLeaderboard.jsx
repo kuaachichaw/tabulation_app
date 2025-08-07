@@ -330,7 +330,7 @@ export default function ALeaderboard() {
                                 <p className="text-gray-500 dark:text-gray-400">
                                     {isOverall 
                                         ? 'No overall scores available yet'
-                                        : 'Select a Segment to Display Candidates Score'}
+                                        : 'No Scores available yet'}
                                 </p>
                             </div>
                         ) : (
