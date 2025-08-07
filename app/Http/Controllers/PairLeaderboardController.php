@@ -14,28 +14,35 @@ class PairLeaderboardController extends Controller
 {
 
     public function index()
-    {
-        try {
-            $pairSegments = PairSegment::select('id', 'pair_name', 'male_name', 'female_name')->get();
+{
+    try {
+        // Get only segments that have weights in pair_overall_leaderboard
+        $weightedSegmentIds = PairOverallLeaderboard::select('pair_segment_id')
+            ->distinct()
+            ->pluck('pair_segment_id');
+        
+        $pairSegments = PairSegment::whereIn('id', $weightedSegmentIds)
+            ->select('id', 'pair_name', 'male_name', 'female_name')
+            ->get();
             
-            $weights = PairOverallLeaderboard::get()
-                ->groupBy('gender')
-                ->mapWithKeys(function ($items, $gender) {
-                    return [$gender => $items->pluck('weight', 'pair_segment_id')];
-                });
+        $weights = PairOverallLeaderboard::get()
+            ->groupBy('gender')
+            ->mapWithKeys(function ($items, $gender) {
+                return [$gender => $items->pluck('weight', 'pair_segment_id')];
+            });
 
-            return response()->json([
-                'pairSegments' => $pairSegments,
-                'maleWeights' => $weights['male'] ?? [],
-                'femaleWeights' => $weights['female'] ?? []
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to load pair overall leaderboard data',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'pairSegments' => $pairSegments,
+            'maleWeights' => $weights['male'] ?? [],
+            'femaleWeights' => $weights['female'] ?? []
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to load pair overall leaderboard data',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
   public function store(Request $request)
 {
@@ -239,6 +246,13 @@ class PairLeaderboardController extends Controller
             'message' => $e->getMessage()
         ], 500);
     }
+
+       return response()->json([
+        'gender' => $gender,
+        'total_weight' => $totalWeight . '%',
+        'leaderboard' => $rankedLeaderboard, // Make sure this contains the data
+        'success' => true
+    ]);
 }
 
 private function applyRanking($candidates)

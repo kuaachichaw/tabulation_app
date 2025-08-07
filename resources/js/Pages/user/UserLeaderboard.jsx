@@ -2,24 +2,24 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import FlexContainer from '@/Components/FlexContainer';
 import useDrag from '@/Components/useDrag';
-import { BiLogoSlack, BiSolidUser, BiDownload, BiCog, BiCrown } from "react-icons/bi";
+import { BiLogoSlack, BiSolidUser, BiDownload, BiCog } from "react-icons/bi";
 import LeaderboardTypeSelector from '@/Components/LeaderboardTypeSelector';
 import { useLeaderboardBackend } from '@/BackEnd/LeaderboardBackEnd.jsx';
 import { HiUsers } from 'react-icons/hi';
 import { FaFemale, FaMale, FaFilter } from "react-icons/fa";
 import { SoloLeaderBoard } from '@/Components/SoloLeaderBoard';
 import { PairLeaderBoard } from '@/Components/PairLeaderBoard';
-import { BiLoaderAlt } from 'react-icons/bi';
+import axios from 'axios';
 
-export default function Leaderboard() {
-    // State for display mode (now controlled by backend setting)
+export default function ALeaderboard() {
+    const [displayMode, setDisplayMode] = useState('solo');
     const [displaySetting, setDisplaySetting] = useState(null); // 0, 1, or 2
-    const [effectiveDisplayMode, setEffectiveDisplayMode] = useState('solo'); // 'solo' or 'pair'
     const [genderFilter, setGenderFilter] = useState(null);
+    const [loadingRankings, setLoadingRankings] = useState(false);
+    const [overallRankings, setOverallRankings] = useState(null);
 
     const {
         segments,
@@ -31,7 +31,7 @@ export default function Leaderboard() {
         error,
         isOverall,
         setIsOverall,
-    } = useLeaderboardBackend(effectiveDisplayMode);
+    } = useLeaderboardBackend(displayMode);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     
@@ -40,7 +40,7 @@ export default function Leaderboard() {
         y: 20,
     });
 
-    // Fetch display setting and set initial mode
+    // Fetch display setting on component mount
     useEffect(() => {
         const fetchDisplaySetting = async () => {
             try {
@@ -50,79 +50,50 @@ export default function Leaderboard() {
                 
                 // Set initial display mode based on setting
                 if (setting === 1) { // Pair only
-                    setEffectiveDisplayMode('pair');
+                    setDisplayMode('pair');
                 } else { // Default to solo for 0 or 2
-                    setEffectiveDisplayMode('solo');
+                    setDisplayMode('solo');
                 }
             } catch (error) {
                 console.error("Error fetching display settings:", error);
-                toast.error("Failed to load display settings");
                 // Default to showing both if there's an error
                 setDisplaySetting(2);
-                setEffectiveDisplayMode('solo');
+                setDisplayMode('solo');
             }
         };
         fetchDisplaySetting();
     }, []);
 
-    const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
-    const selectedPairSegment = pairSegments.find(segment => segment.id === selectedSegmentId);
+    // Fetch overall rankings when in pair overall mode
+    useEffect(() => {
+        if (displayMode === 'pair' && isOverall) {
+            fetchOverallRankings();
+        }
+    }, [displayMode, isOverall]);
+
+    const fetchOverallRankings = async () => {
+        setLoadingRankings(true);
+        try {
+            const response = await axios.get('/PairLeaderboard/index');
+            setOverallRankings(response.data);
+        } catch (error) {
+            console.error('Error fetching overall rankings:', error);
+        } finally {
+            setLoadingRankings(false);
+        }
+    };
 
     const handleModeChange = (mode) => {
         if (displaySetting === 2) { // Only allow changes if both are enabled
-            setEffectiveDisplayMode(mode);
+            setDisplayMode(mode);
             setGenderFilter(null);
             setSelectedSegmentId(null);
+            setOverallRankings(null);
         }
     };
 
-    const renderLeaderboardContent = () => {
-        // If display setting is pair only (1), force pair mode
-        if (displaySetting === 1 || effectiveDisplayMode === 'pair') {
-            if (!selectedSegmentId) {
-                return (
-                    <div className="text-center py-8 space-y-2">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            Please select a segment to view pair leaderboard
-                        </p>
-                    </div>
-                );
-            }
-            if (!genderFilter) {
-                return (
-                    <div className="text-center py-8 space-y-2">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            Please select Male or Female candidates and choose a Segment
-                        </p>
-                    </div>
-                );
-            }
-            return (
-                <PairLeaderBoard 
-                    leaderboard={leaderboard}
-                    isOverall={isOverall}
-                    segmentName={selectedPairSegment?.pair_name}
-                    genderFilter={genderFilter}
-                />
-            );
-        } else { // Solo or both modes
-            if (leaderboard.length === 0) {
-                return (
-                    <div className="text-center py-8 space-y-2">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            {isOverall 
-                                ? 'No overall scores available yet'
-                                : 'Select a Segment to Display Candidates Score'}
-                        </p>
-                    </div>
-                );
-            }
-            return <SoloLeaderBoard leaderboard={leaderboard} isOverall={isOverall} />;
-        }
-    };
-
-    // Only show mode toggle if display setting allows both modes
-    const showModeToggle = displaySetting === 2;
+    const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
+    const selectedPairSegment = pairSegments.find(segment => segment.id === selectedSegmentId);
 
     return (
         <AuthenticatedLayout 
@@ -135,14 +106,15 @@ export default function Leaderboard() {
             <Head title="Leaderboard" />
             
             <div className="space-y-6">
-                {showModeToggle ? (
+                {/* Display Mode Toggle or Notice */}
+                {displaySetting === 2 ? (
                     <div className="w-full">
                         <div className="flex justify-center">
                             <div className="inline-flex rounded-lg shadow-sm" role="group">
                                 <button
                                     onClick={() => handleModeChange('solo')}
                                     className={`px-4 py-2 text-sm font-medium rounded-l-lg border transition-colors duration-200 flex items-center gap-2 ${
-                                        effectiveDisplayMode === 'solo'
+                                        displayMode === 'solo'
                                             ? 'bg-indigo-600 text-white border-indigo-600'
                                             : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                     }`}
@@ -152,7 +124,7 @@ export default function Leaderboard() {
                                 <button
                                     onClick={() => handleModeChange('pair')}
                                     className={`px-4 py-2 text-sm font-medium rounded-r-lg border transition-colors duration-200 flex items-center gap-2 ${
-                                        effectiveDisplayMode === 'pair'
+                                        displayMode === 'pair'
                                             ? 'bg-indigo-600 text-white border-indigo-600'
                                             : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
                                     }`}
@@ -175,9 +147,8 @@ export default function Leaderboard() {
                         </div>
                     </div>
                 )}
-
-                {/* Rest of your existing code remains the same */}
-                {effectiveDisplayMode === 'pair' && (
+                                
+                {displayMode === 'pair' && (
                     <div className="w-full">
                         <div className="flex flex-col items-center">
                             <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -202,12 +173,6 @@ export default function Leaderboard() {
                                     <FaMale className="w-4 h-4" /> Male
                                 </button>
                             </div>
-                            {!selectedSegmentId && pairSegments.length > 0 && (
-                                <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
-                                    <FaFilter className="w-3 h-3" /> 
-                                    Please select Male or Female Candidate and Choose a Segment
-                                </p>
-                            )}
                         </div>
                     </div>
                 )}
@@ -217,23 +182,24 @@ export default function Leaderboard() {
                     <div className="hidden lg:block md:hidden bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                         <div className="sticky top-4">
                             <h3 className="text-md font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-                                <BiCrown className="w-4 h-4" />
-                                Leaderboard
+                                <BiCog className="w-4 h-4" />
+                                Leaderboard Settings
                             </h3>
                             <LeaderboardTypeSelector
                                 isOverall={isOverall}
                                 setIsOverall={setIsOverall}
                                 setIsModalOpen={setIsModalOpen}
-                                segments={effectiveDisplayMode === 'pair' ? pairSegments : segments}
+                                segments={displayMode === 'pair' ? pairSegments : segments}
                                 selectedSegmentId={selectedSegmentId}
                                 setSelectedSegmentId={setSelectedSegmentId}
-                                displayMode={effectiveDisplayMode}
+                                displayMode={displayMode}
                             />
                         </div>
                     </div>
 
                     {isSmallScreen && (
                         <>
+                            {/* Draggable Button */}
                             <motion.button
                                 style={buttonStyle}
                                 className="p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center z-40"
@@ -246,6 +212,7 @@ export default function Leaderboard() {
                                 <BiLogoSlack className="w-5 h-5" />
                             </motion.button>
 
+                            {/* Modal for Selecting a Segment */}
                             {isModalOpen && (
                                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setIsModalOpen(false)}>
                                     <motion.div 
@@ -257,16 +224,16 @@ export default function Leaderboard() {
                                     >
                                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
                                             <BiCog className="w-5 h-5" />
-                                            Leaderboard
+                                            Leaderboard Settings
                                         </h3>
                                         <LeaderboardTypeSelector
                                             isOverall={isOverall}
                                             setIsOverall={setIsOverall}
                                             setIsModalOpen={setIsModalOpen}
-                                            segments={effectiveDisplayMode === 'pair' ? pairSegments : segments}
+                                            segments={displayMode === 'pair' ? pairSegments : segments}
                                             selectedSegmentId={selectedSegmentId}
                                             setSelectedSegmentId={setSelectedSegmentId}
-                                            displayMode={effectiveDisplayMode}
+                                            displayMode={displayMode}
                                         />
                                         <div className="flex justify-center mt-4">
                                             <button
@@ -282,16 +249,17 @@ export default function Leaderboard() {
                         </>
                     )}
 
+                    {/* Main Content - Leaderboard Display */}
                     <div className="col-span-3 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 relative">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                             <div>
                                 <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
                                     {isOverall 
                                         ? '🏆 Overall Leaderboard' 
-                                        : effectiveDisplayMode === 'pair' 
+                                        : displayMode === 'pair' 
                                             ? selectedPairSegment?.pair_name || 'Pair Leaderboard'
                                             : selectedSegment?.name || 'Leaderboard'}
-                                    {effectiveDisplayMode === 'pair' && genderFilter && (
+                                    {displayMode === 'pair' && genderFilter && (
                                         <span className={`ml-2 text-sm px-2 py-1 rounded-full ${
                                             genderFilter === 'female' 
                                                 ? 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200'
@@ -309,9 +277,9 @@ export default function Leaderboard() {
                             </div>
                         </div>
 
-                        {loading ? (
+                        {loading || loadingRankings ? (
                             <div className="flex justify-center items-center h-64">
-                                <BiLoaderAlt className="animate-spin text-4xl text-indigo-600" />
+                                <div className="animate-spin h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
                             </div>
                         ) : error ? (
                             <div className="text-center py-8 space-y-4">
@@ -323,14 +291,57 @@ export default function Leaderboard() {
                                     Retry
                                 </button>
                             </div>
+                        ) : displayMode === 'pair' ? (
+                            isOverall ? (
+                                // Overall Pair Leaderboard View
+                                genderFilter ? (
+                                    <PairLeaderBoard 
+                                        isOverall={true}
+                                        genderFilter={genderFilter}
+                                    />
+                                ) : (
+                                    <div className="text-center py-8 space-y-2">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Please select Male or Female to view overall rankings
+                                        </p>
+                                    </div>
+                                )
+                            ) : !selectedSegmentId ? (
+                                <div className="text-center py-8 space-y-2">
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Please select a segment to view pair leaderboard
+                                    </p>
+                                </div>
+                            ) : genderFilter ? (
+                                <PairLeaderBoard 
+                                    isOverall={false}
+                                    segmentId={selectedSegmentId}
+                                    genderFilter={genderFilter}
+                                />
+                            ) : (
+                                <div className="text-center py-8 space-y-2">
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        Please select Male or Female candidates and choose a Segment
+                                    </p>
+                                </div>
+                            )
+                        ) : leaderboard.length === 0 ? (
+                            <div className="text-center py-8 space-y-2">
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    {isOverall 
+                                        ? 'No overall scores available yet'
+                                        : 'Select a Segment to Display Candidates Score'}
+                                </p>
+                            </div>
                         ) : (
-                            renderLeaderboardContent()
+                            <SoloLeaderBoard 
+                                leaderboard={leaderboard}
+                                isOverall={isOverall}
+                            />
                         )}
                     </div>
                 </FlexContainer>
             </div>
-
-            <ToastContainer position="bottom-right" autoClose={3000} />
         </AuthenticatedLayout>
     );
 }

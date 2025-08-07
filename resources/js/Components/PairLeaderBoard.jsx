@@ -79,37 +79,44 @@ export const PairLeaderBoard = ({
     return (
       <div className="flex flex-col md:flex-row justify-center items-end gap-6 mt-12">
         {winners.slice(0, 3).map((candidate, index) => (
-          <motion.div
-            key={`${genderFilter}-${candidate.id || index}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`relative flex flex-col items-center p-4 rounded-lg shadow-md bg-white dark:bg-gray-800 ${
-              index === 0 ? 'md:order-2 h-64' : 
-              index === 1 ? 'md:order-1 h-52' : 
-              'md:order-3 h-48'
-            }`}
-            style={{ minWidth: index === 0 ? "120px" : "100px" }}
-          >
-            <div className="relative">
-              {candidate.picture && (
-                <img
-                  src={`/storage/${candidate.picture}`}
-                  alt={candidate.name || 'Candidate'}
-                  className={`rounded-full object-cover border-4 ${
-                    index === 0 ? 'w-32 h-32 border-yellow-400' :
-                    index === 1 ? 'w-28 h-28 border-gray-300' :
-                    'w-24 h-24 border-amber-600'
-                  }`}
-                />
-              )}
-              <span className="badgeBounce absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-lg px-8 py-3 rounded-full">
-                {index === 0 ? "🏆" : index === 1 ? "🥈" : "🥉"}
-              </span>
-            </div>
-            <h4 className="text-gray-900 dark:text-white text-lg font-bold mt-2">
-              {candidate.name || 'Unknown Candidate'}
-            </h4>
+         <motion.div
+  key={`${genderFilter}-${candidate.id || index}`}
+  className={`relative flex flex-col items-center p-4 rounded-lg shadow-md bg-white dark:bg-gray-800 ${
+    index === 0 ? 'md:order-2 h-72' :  // Increased height to accommodate
+    index === 1 ? 'md:order-1 h-60' : 
+    'md:order-3 h-56'
+  }`}
+  style={{ minWidth: index === 0 ? "120px" : "100px" }}
+>
+  {/* Pair name with extra top margin */}
+  {candidate.pair_name && (
+    <p className="text-lg font-bold text-gray-900 dark:text-white mb-1 mt-4">
+      {candidate.pair_name}
+    </p>
+  )}
+  
+  {/* Image container with adjusted positioning */}
+  <div className="relative mt-2">  {/* Added margin-top */}
+    {candidate.picture && (
+      <img
+        src={`/storage/${candidate.picture}`}
+        alt={candidate.name || 'Candidate'}
+        className={`rounded-full object-cover border-4 ${
+          index === 0 ? 'w-32 h-32 border-yellow-400' :
+          index === 1 ? 'w-28 h-28 border-gray-300' :
+          'w-24 h-24 border-amber-600'
+        }`}
+      />
+    )}
+    {/* Medal badge - positioned absolutely within the image container */}
+    <span className="badgeBounce absolute -top-0 left-1/2 transform -translate-x-1/2 text-white text-lg px-8 py-3 rounded-full">
+      {index === 0 ? "🏆" : index === 1 ? "🥈" : "🥉"}
+    </span>
+  </div>
+  
+  <h4 className="text-gray-900 dark:text-white text-lg font-bold mt-2">
+    {candidate.name || 'Unknown Candidate'}
+  </h4>
             {!isOverall && candidate.judge_scores && (
               <JudgeScores scores={candidate.judge_scores} />
             )}

@@ -5,6 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ExportCSVModal from '@/Modal/ExportCSVModal';
+import ExportPairCSVModal from '@/Modal/ExportPairCSVModal';
 import OverallLeaderboardModal from '@/Modal/OverallLeaderboardModal';
 import PairOverallLeaderboardModal from '@/Modal/PairOverallLeaderboardModal';
 import FlexContainer from '@/Components/FlexContainer';
@@ -38,6 +39,8 @@ export default function ALeaderboard() {
     } = useLeaderboardBackend(displayMode);
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [isPairExportModalOpen, setIsPairExportModalOpen] = useState(false);
+    const [isOverallExportModalOpen, setIsOverallExportModalOpen] = useState(false);
     const [isOverallSetupOpen, setIsOverallSetupOpen] = useState(false);
     const [isPairOverallSetupOpen, setIsPairOverallSetupOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,20 +53,30 @@ export default function ALeaderboard() {
     const selectedSegment = segments.find(segment => segment.id === selectedSegmentId);
     const selectedPairSegment = pairSegments.find(segment => segment.id === selectedSegmentId);
 
-    // Fetch overall rankings when in pair overall mode
     useEffect(() => {
         if (displayMode === 'pair' && isOverall) {
             fetchOverallRankings();
         }
-    }, [displayMode, isOverall]);
+    }, [displayMode, isOverall, genderFilter]);
 
     const fetchOverallRankings = async () => {
         setLoadingRankings(true);
         try {
-            const response = await axios.get('/PairLeaderboard/index');
-            setOverallRankings(response.data);
+            // Fetch both male and female data
+            const [maleResponse, femaleResponse] = await Promise.all([
+                axios.get('/PairLeaderboard/PairOverAll/male'),
+                axios.get('/PairLeaderboard/PairOverAll/female')
+            ]);
+
+            setOverallRankings({
+                data: {
+                    male: maleResponse.data?.leaderboard || [],
+                    female: femaleResponse.data?.leaderboard || []
+                }
+            });
         } catch (error) {
             console.error('Error fetching overall rankings:', error);
+            setOverallRankings({ data: { male: [], female: [] } });
         } finally {
             setLoadingRankings(false);
         }
@@ -86,7 +99,38 @@ export default function ALeaderboard() {
 
     const handlePairOverallSave = () => {
         setIsPairOverallSetupOpen(false);
-        fetchOverallRankings(); // Refresh rankings after saving weights
+        fetchOverallRankings();
+    };
+
+    const handleExportClick = () => {
+        if (displayMode === 'pair') {
+            if (isOverall) {
+                // Check if we have data for the selected gender or any gender
+                const hasData = genderFilter 
+                    ? overallRankings?.data?.[genderFilter]?.length > 0
+                    : overallRankings?.data?.male?.length > 0 || overallRankings?.data?.female?.length > 0;
+                
+                if (hasData) {
+                    setIsPairExportModalOpen(true);
+                } else {
+                    alert('No pair overall data available to export. Please ensure:\n1. Segment weights are configured\n2. Scores have been entered\n3. You have selected a gender');
+                }
+            } else {
+                // Check segment pair data
+                if (leaderboard?.male?.length > 0 || leaderboard?.female?.length > 0) {
+                    setIsPairExportModalOpen(true);
+                } else {
+                    alert('No pair segment data available to export. Please select a segment and gender.');
+                }
+            }
+        } else {
+            // Handle solo exports
+            if (isOverall) {
+                setIsOverallExportModalOpen(true);
+            } else {
+                setIsExportModalOpen(true);
+            }
+        }
     };
 
     return (
@@ -267,9 +311,8 @@ export default function ALeaderboard() {
                                     </button>
                                 )}
                                 <button
-                                    onClick={() => setIsExportModalOpen(true)}
+                                    onClick={handleExportClick}
                                     className="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-lg text-sm flex items-center gap-1.5 transition-colors"
-                                    disabled={displayMode === 'pair' && (!genderFilter || !selectedSegmentId)}
                                 >
                                     <BiDownload className="w-4 h-4" />
                                     <span className="hidden sm:inline">Export</span>
@@ -298,6 +341,7 @@ export default function ALeaderboard() {
                                     <PairLeaderBoard 
                                         isOverall={true}
                                         genderFilter={genderFilter}
+                                        leaderboard={overallRankings?.data}
                                     />
                                 ) : (
                                     <div className="text-center py-8 space-y-2">
@@ -317,6 +361,7 @@ export default function ALeaderboard() {
                                     isOverall={false}
                                     segmentId={selectedSegmentId}
                                     genderFilter={genderFilter}
+                                    leaderboard={leaderboard}
                                 />
                             ) : (
                                 <div className="text-center py-8 space-y-2">
@@ -347,8 +392,28 @@ export default function ALeaderboard() {
             <ExportCSVModal
                 isOpen={isExportModalOpen}
                 onClose={() => setIsExportModalOpen(false)}
-                leaderboard={isOverall && displayMode === 'pair' ? overallRankings?.data?.rankings : leaderboard}
-                segments={displayMode === 'pair' ? pairSegments : segments}
+                leaderboard={leaderboard}
+                segments={segments}
+                selectedSegmentId={selectedSegmentId}
+                isOverall={false}
+                judges={judges}
+            />
+            
+            <ExportCSVModal
+                isOpen={isOverallExportModalOpen}
+                onClose={() => setIsOverallExportModalOpen(false)}
+                leaderboard={leaderboard}
+                segments={segments}
+                selectedSegmentId={null}
+                isOverall={true}
+                judges={judges}
+            />
+            
+            <ExportPairCSVModal
+                isOpen={isPairExportModalOpen}
+                onClose={() => setIsPairExportModalOpen(false)}
+                leaderboard={isOverall ? overallRankings?.data : leaderboard}
+                pairSegments={pairSegments}
                 selectedSegmentId={selectedSegmentId}
                 isOverall={isOverall}
                 judges={judges}
